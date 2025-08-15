@@ -1,0 +1,6 @@
+
+
+onlyBuiltDependencies:
+  - supabase
+  - esbuild
+
