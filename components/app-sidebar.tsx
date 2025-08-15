@@ -94,13 +94,29 @@ export function AppSidebar() {
 
       const { data, error } = await supabase
         .from("organization_memberships")
-        .select("organizations ( id, name, slug )")
+        .select(
+          `
+          organizations!inner (
+            id,
+            name,
+            slug
+          )
+        `,
+        )
         .eq("user_id", user.id);
 
       if (cancelled) return;
       if (!error && data) {
+        console.log("Raw Supabase data:", data);
+
         const orgs = data
-          .map((item: any) => item.organizations)
+          .map((item) => {
+            // Handle the actual structure returned by Supabase
+            const org = Array.isArray(item.organizations)
+              ? item.organizations[0]
+              : item.organizations;
+            return org;
+          })
           .filter(Boolean)
           .sort((a: Organization, b: Organization) =>
             a.name.localeCompare(b.name),
