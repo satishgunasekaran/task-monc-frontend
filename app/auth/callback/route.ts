@@ -27,15 +27,20 @@ export async function GET(request: NextRequest) {
     if (!error && data.user) {
       // Success - redirect to the intended destination
       const forwardedHost = request.headers.get('x-forwarded-host')
+      const forwardedProto = request.headers.get('x-forwarded-proto')
       const isLocalEnv = process.env.NODE_ENV === 'development'
       
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
-      } else {
-        return NextResponse.redirect(`${origin}${next}`)
+      let redirectUrl = `${origin}${next}`
+      
+      if (!isLocalEnv) {
+        // In production, prioritize forwarded headers (for Vercel, Netlify, etc.)
+        if (forwardedHost) {
+          const protocol = forwardedProto || 'https'
+          redirectUrl = `${protocol}://${forwardedHost}${next}`
+        }
       }
+      
+      return NextResponse.redirect(redirectUrl)
     } else {
       // Handle specific Supabase auth errors
       console.error('Supabase Auth Error:', error)
