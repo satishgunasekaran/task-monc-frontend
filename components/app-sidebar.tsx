@@ -65,15 +65,15 @@ export function AppSidebar() {
 
   type Organization = { id: string; name: string; slug: string | null };
   type Project = { id: string; name: string; status: string };
-  
+
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectsOpen, setProjectsOpen] = useState(() => {
     // Auto-open if we're on a projects page
-    return pathname?.startsWith('/projects') ?? true;
+    return pathname?.startsWith("/projects") ?? true;
   });
-  
+
   const activeOrg = useMemo(
     () => organizations.find((o) => o.id === activeOrgId) ?? null,
     [organizations, activeOrgId],
@@ -100,9 +100,12 @@ export function AppSidebar() {
       if (cancelled) return;
       if (!error && data) {
         const orgs = data
-          .map((row: { organizations: Organization[] }) => row.organizations[0])
-          .filter(Boolean) as Organization[];
-        orgs.sort((a, b) => a.name.localeCompare(b.name));
+          .map((item: any) => item.organizations)
+          .filter(Boolean)
+          .sort((a: Organization, b: Organization) =>
+            a.name.localeCompare(b.name),
+          );
+
         setOrganizations(orgs);
 
         // If no active org set, or cookie points to an org the user isn't a member of,
@@ -157,7 +160,7 @@ export function AppSidebar() {
 
   // Auto-open projects section when navigating to projects pages
   useEffect(() => {
-    if (pathname?.startsWith('/projects')) {
+    if (pathname?.startsWith("/projects")) {
       setProjectsOpen(true);
     }
   }, [pathname]);
@@ -230,29 +233,28 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              
+
               {/* Projects Section with Sub-navigation */}
-              <Collapsible 
-                open={projectsOpen} 
-                onOpenChange={setProjectsOpen}
-              >
+              <Collapsible open={projectsOpen} onOpenChange={setProjectsOpen}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton 
+                    <SidebarMenuButton
                       tooltip="Projects"
-                      isActive={pathname?.startsWith('/projects')}
+                      isActive={pathname?.startsWith("/projects")}
                     >
                       <FolderOpen />
                       <span>Projects</span>
-                      <ChevronRight className={`ml-auto h-4 w-4 transition-transform duration-200 ${projectsOpen ? 'rotate-90' : ''}`} />
+                      <ChevronRight
+                        className={`ml-auto h-4 w-4 transition-transform duration-200 ${projectsOpen ? "rotate-90" : ""}`}
+                      />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton 
+                        <SidebarMenuSubButton
                           asChild
-                          isActive={pathname === '/projects'}
+                          isActive={pathname === "/projects"}
                         >
                           <Link href="/projects">
                             <span>All Projects</span>
@@ -261,7 +263,7 @@ export function AppSidebar() {
                       </SidebarMenuSubItem>
                       {projects.map((project) => (
                         <SidebarMenuSubItem key={project.id}>
-                          <SidebarMenuSubButton 
+                          <SidebarMenuSubButton
                             asChild
                             isActive={pathname === `/projects/${project.id}`}
                           >
