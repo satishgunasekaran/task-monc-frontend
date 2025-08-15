@@ -6,6 +6,12 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+runtime: 'experimental-edge',
+  unstable_allowDynamic: [
+    // Allow dynamic imports from Supabase packages
+    '**/node_modules/@supabase/supabase-js/dist/module/index.js',
+    '**/node_modules/@supabase/ssr/dist/module/index.js',
+  ],
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
