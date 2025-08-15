@@ -35,7 +35,7 @@ export async function acceptInvitation(formData: FormData) {
   }
 
   // Set active org to the joined org for convenience
-  const orgId = (membership as any)?.organization_id || invitation.organization_id
+  const orgId = (membership as { organization_id?: string })?.organization_id || invitation.organization_id
   if (orgId) {
     await setActiveOrgIdServer(orgId)
   }

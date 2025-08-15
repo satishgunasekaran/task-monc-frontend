@@ -36,7 +36,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -165,7 +164,7 @@ export function CreateProjectForm({ project, trigger }: CreateProjectFormProps) 
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide a brief overview of the project's goals and scope.
+                      Provide a brief overview of the project&apos;s goals and scope.
                       (Optional)
                     </FormDescription>
                     <FormMessage />

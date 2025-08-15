@@ -20,9 +20,7 @@ import {
 } from "@dnd-kit/core";
 import {
   arrayMove,
-  SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { updateTaskPositionAndStatus } from "@/app/(site)/tasks/actions";
 import { toast } from "sonner";

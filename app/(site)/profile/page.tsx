@@ -76,25 +76,29 @@ export default async function ProfilePage() {
               <div className="space-y-4">
                 <h3 className="text-base md:text-lg font-semibold">Your Organizations</h3>
                 <div className="space-y-3">
-                  {organizations.map((membership: any) => (
+                  {organizations.map((membership: { role: string; organizations: { id: string; name: string; slug: string; description?: string | null; logo_url?: string | null; created_at?: string }[] }) => {
+                    // Supabase returns organizations as an array, so get the first one
+                    const org = membership.organizations?.[0];
+                    return (
                     <div
-                      key={membership.organizations.id}
+                      key={org?.id || Math.random()}
                       className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg gap-3"
                     >
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-medium truncate">{membership.organizations.name}</h4>
+                        <h4 className="font-medium truncate">{org?.name || 'Organization'}</h4>
                         <p className="text-sm text-muted-foreground line-clamp-2">
-                          {membership.organizations.description}
+                          {org?.description || ''}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Role: <span className="capitalize">{membership.role}</span>
                         </p>
                       </div>
                       <div className="text-sm text-muted-foreground font-mono shrink-0">
-                        /{membership.organizations.slug}
+                        /{org?.slug || 'unknown'}
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}

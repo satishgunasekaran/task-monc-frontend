@@ -21,9 +21,9 @@ export default async function InvitationsPage() {
     .order("created_at", { ascending: false })
 
   // Resolve inviter profiles so we can show who invited the user
-  let inviterProfiles: Record<string, { full_name: string | null; email: string | null }> = {}
+  const inviterProfiles: Record<string, { full_name: string | null; email: string | null }> = {}
   const inviterIds = Array.from(
-    new Set((invites ?? []).map((i: any) => i.invited_by).filter(Boolean) as string[])
+    new Set((invites ?? []).map((i) => i.invited_by).filter(Boolean) as string[])
   )
   if (inviterIds.length > 0) {
     const { data: profs } = await supabase
@@ -31,7 +31,7 @@ export default async function InvitationsPage() {
       .select('id, full_name, email')
       .in('id', inviterIds)
     if (profs) {
-      for (const p of profs as any[]) {
+      for (const p of profs as { id: string; full_name: string | null; email: string | null }[]) {
         inviterProfiles[p.id] = { full_name: p.full_name, email: p.email }
       }
     }
@@ -56,7 +56,7 @@ export default async function InvitationsPage() {
             >
               <div className="flex flex-col">
                 <span className="font-medium">
-                  {(inv as any).organizations?.name ?? "Organization"}
+                  {(inv as { organizations?: { name?: string } }).organizations?.name ?? "Organization"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   Role: {inv.role} • Expires {new Date(inv.expires_at).toLocaleString()}

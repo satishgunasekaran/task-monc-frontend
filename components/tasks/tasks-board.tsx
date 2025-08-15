@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, User, Clock } from "lucide-react";
+import { CalendarDays, User } from "lucide-react";
 
 interface Task {
   id: string;

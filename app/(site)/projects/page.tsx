@@ -10,8 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
@@ -63,7 +61,19 @@ export default async function ProjectsPage() {
   }
 
   // Fetch user profiles for project creators
-  let projects: any[] = [];
+  let projects: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    status: "completed" | "planning" | "active" | "on_hold" | "cancelled";
+    start_date: string | null;
+    due_date: string | null;
+    created_at: string;
+    updated_at: string;
+    created_by: string;
+    user_profiles: { id: string; first_name: string | null; last_name: string | null } | null;
+    tasks: Array<{ count: number }>;
+  }> = [];
   if (projectsData && projectsData.length > 0) {
     const creatorIds = [
       ...new Set(projectsData.map((p) => p.created_by).filter(Boolean)),
@@ -100,7 +110,7 @@ export default async function ProjectsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Projects</h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Manage your organization's projects and track progress.
+            Manage your organization&apos;s projects and track progress.
           </p>
         </div>
         <CreateProjectForm />

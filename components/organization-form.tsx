@@ -42,7 +42,7 @@ export function OrganizationForm({ userId }: OrganizationFormProps) {
         form.reset()
         setSlug('')
       }
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred')
     } finally {
       setLoading(false)

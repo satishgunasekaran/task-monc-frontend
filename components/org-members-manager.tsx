@@ -63,7 +63,7 @@ export function OrgMembersManager() {
       if (cancelled) return
       const safeMembers = (memData ?? []) as MemberRow[]
       setMembers(safeMembers)
-      setPendingInvites((invData ?? []) as any)
+      setPendingInvites((invData ?? []) as Array<{ id: string; email: string; role: string; invited_by: string | null }>)
 
       const userIds = Array.from(new Set(safeMembers.map((m) => m.user_id)))
       if (userIds.length > 0) {
@@ -96,15 +96,15 @@ export function OrgMembersManager() {
       form.set('email', email)
       form.set('role', role)
       const res = await inviteToOrganization(form)
-      if (res && (res as any).error) {
-        toast.error((res as any).error)
+      if (res && (res as { error?: string }).error) {
+        toast.error((res as { error?: string }).error)
       } else {
         toast.success('Invitation sent')
         setEmail('')
         setRole('member')
-        const newInvitation = (res as any).invitation as { id: string; email: string; role: string; invited_by: string | null }
+        const newInvitation = (res as { invitation?: { id: string; email: string; role: string; invited_by: string | null } }).invitation
         setPendingInvites((prev) => [
-          newInvitation ?? { id: (res as any).invitation.id, email, role, invited_by: currentUserId },
+          newInvitation ?? { id: 'temp-id', email, role, invited_by: currentUserId },
           ...prev,
         ])
       }
@@ -212,7 +212,7 @@ export function OrgMembersManager() {
                 id="inv_role"
                 className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
                 value={role}
-                onChange={(e) => setRole(e.target.value as any)}
+                onChange={(e) => setRole(e.target.value as 'member' | 'admin' | 'owner')}
               >
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>

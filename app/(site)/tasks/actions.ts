@@ -136,7 +136,10 @@ export async function updateTask(taskId: string, formData: FormData) {
         .eq('id', taskId)
         .single()
 
-    if (taskError || !task || (task.projects as any)?.organization_id !== activeOrgId) {
+    const projectOrgId = Array.isArray(task?.projects) 
+        ? task.projects[0]?.organization_id 
+        : task?.projects ? (task.projects as { organization_id: string }).organization_id : undefined;
+    if (taskError || !task || projectOrgId !== activeOrgId) {
         return { error: 'Task not found or access denied' }
     }
 
@@ -198,14 +201,21 @@ export async function updateTaskPositionAndStatus(
         .eq('id', taskId)
         .single()
 
-    if (taskError || !task || (task.projects as any)?.organization_id !== activeOrgId) {
+    const projectOrgId = Array.isArray(task?.projects) 
+        ? task.projects[0]?.organization_id 
+        : task?.projects ? (task.projects as { organization_id: string }).organization_id : undefined;
+    if (taskError || !task || projectOrgId !== activeOrgId) {
         console.log('Task verification failed:', { taskError, task, activeOrgId })
         return { error: 'Task not found or access denied' }
     }
     
     console.log('Task found:', task)
 
-    const updateData: any = {
+    const updateData: {
+        status: string;
+        position: number;
+        completed_at?: string | null;
+    } = {
         status: newStatus,
         position: newPosition,
     }
@@ -232,7 +242,6 @@ export async function updateTaskPositionAndStatus(
     console.log('Task updated successfully in database')
 
     // Reorder other tasks if needed
-    const targetProjectId = projectId || task.project_id
     
     let query = supabase
         .from('tasks')
@@ -305,7 +314,10 @@ export async function deleteTask(taskId: string) {
         .eq('id', taskId)
         .single()
 
-    if (taskError || !task || (task.projects as any)?.organization_id !== activeOrgId) {
+    const projectOrgId = Array.isArray(task?.projects) 
+        ? task.projects[0]?.organization_id 
+        : task?.projects ? (task.projects as { organization_id: string }).organization_id : undefined;
+    if (taskError || !task || projectOrgId !== activeOrgId) {
         return { error: 'Task not found or access denied' }
     }
 

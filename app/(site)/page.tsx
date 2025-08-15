@@ -83,7 +83,7 @@ export default async function PrivatePage() {
                                     Getting Started
                                 </CardTitle>
                                 <CardDescription>
-                                    Ready to begin your conversation? Here's what you can do:
+                                    Ready to begin your conversation? Here&apos;s what you can do:
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>

@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 
 export async function updateProfile(formData: FormData) {
@@ -150,10 +149,11 @@ export async function inviteToOrganization(formData: FormData) {
 
   if (error) {
     console.error('Invite error:', error)
-    if ((error as any).message && (error as any).message.includes('invitation_already_exists')) {
+    const errorMessage = (error as { message?: string }).message;
+    if (errorMessage && errorMessage.includes('invitation_already_exists')) {
       return { error: 'An active invitation already exists for this email.' }
     }
-    if ((error as any).message && (error as any).message.includes('duplicate key value')) {
+    if (errorMessage && errorMessage.includes('duplicate key value')) {
       return { error: 'An active invitation already exists for this email.' }
     }
     return { error: 'Failed to create invitation' }

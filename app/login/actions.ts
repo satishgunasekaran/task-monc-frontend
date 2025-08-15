@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { loginSchema, registerSchema, type LoginFormData, type RegisterFormData } from '@/lib/validations/auth'
+import { loginSchema, registerSchema } from '@/lib/validations/auth'
 
 type ActionResult = {
   success: boolean
@@ -33,7 +33,7 @@ export async function login(prevState: ActionResult | null, formData: FormData):
       }
     }
 
-    const next = (formData.get('next') as string) || '/'
+    // next parameter handled by redirect in the component
 
     return {
       success: true,
@@ -42,7 +42,7 @@ export async function login(prevState: ActionResult | null, formData: FormData):
 
   } catch (error) {
     // Re-throw the redirect error to ensure navigation completes
-    if (error && (error as any).digest === 'NEXT_REDIRECT') {
+    if (error && (error as { digest?: string }).digest === 'NEXT_REDIRECT') {
       throw error
     }
 

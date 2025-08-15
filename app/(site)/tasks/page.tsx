@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getActiveOrgIdServer } from "@/utils/active-org/server";
 import { DraggableTasksBoard } from "@/components/tasks/draggable-tasks-board";
-import { CreateTaskForm } from "@/components/tasks/create-task-form";
+import { Task } from "@/components/tasks/types";
 import {
   Card,
   CardContent,
@@ -71,7 +71,7 @@ export default async function TasksPage() {
   }
 
   // Fetch user profiles for task creators and assignees
-  let tasks: any[] = [];
+  let tasks: Task[] = [];
   if (tasksData && tasksData.length > 0) {
     const userIds = [
       ...new Set(
@@ -82,7 +82,7 @@ export default async function TasksPage() {
       ),
     ];
 
-    let userProfiles: any[] = [];
+    let userProfiles: Array<{ id: string; first_name: string | null; last_name: string | null }> = [];
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("user_profiles")
@@ -92,13 +92,17 @@ export default async function TasksPage() {
     }
 
     // Transform the data to match the expected format
-    tasks = tasksData.map((task) => ({
-      ...task,
-      created_by_profile:
-        userProfiles.find((profile) => profile.id === task.created_by) || null,
-      assigned_to_profile:
-        userProfiles.find((profile) => profile.id === task.assigned_to) || null,
-    }));
+    tasks = tasksData.map((task) => {
+      // Extract only the fields we need
+      const { created_by, assigned_to, ...taskData } = task;
+      return {
+        ...taskData,
+        created_by_profile:
+          userProfiles.find((profile) => profile.id === created_by) || null,
+        assigned_to_profile:
+          userProfiles.find((profile) => profile.id === assigned_to) || null,
+      };
+    });
   }
 
   // Fetch projects for the dropdown
@@ -118,7 +122,7 @@ export default async function TasksPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">All Tasks</h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            View and manage all tasks across your organization's projects.
+            View and manage all tasks across your organization&apos;s projects.
           </p>
         </div>
         {projects && projects.length > 0 && (

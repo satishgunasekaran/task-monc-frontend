@@ -100,7 +100,7 @@ export function AppSidebar() {
       if (cancelled) return;
       if (!error && data) {
         const orgs = data
-          .map((row: any) => row.organizations)
+          .map((row: { organizations: Organization[] }) => row.organizations[0])
           .filter(Boolean) as Organization[];
         orgs.sort((a, b) => a.name.localeCompare(b.name));
         setOrganizations(orgs);

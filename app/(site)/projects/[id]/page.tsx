@@ -40,7 +40,8 @@ export default async function ProjectDetailPage({
       due_date,
       created_at,
       updated_at,
-      created_by
+      created_by,
+      organization_id
     `,
     )
     .eq("id", id)
@@ -52,7 +53,19 @@ export default async function ProjectDetailPage({
   }
 
   // Fetch user profile for project creator
-  let project: any = projectData;
+  let project: {
+    id: string;
+    name: string;
+    description: string | null;
+    status: "completed" | "planning" | "active" | "on_hold" | "cancelled";
+    start_date: string | null;
+    due_date: string | null;
+    created_at: string;
+    updated_at: string;
+    created_by: string;
+    organization_id: string;
+    user_profiles: { id: string; first_name: string | null; last_name: string | null } | null;
+  } = { ...projectData, user_profiles: null };
   if (projectData.created_by) {
     const { data: userProfile } = await supabase
       .from("user_profiles")
@@ -99,7 +112,23 @@ export default async function ProjectDetailPage({
   }
 
   // Fetch user profiles for task creators and assignees
-  let tasks: any[] = [];
+  let tasks: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    status: "completed" | "todo" | "in_progress" | "review";
+    priority: "low" | "medium" | "high" | "urgent";
+    due_date: string | null;
+    position: number;
+    tags: string[];
+    created_at: string;
+    updated_at: string;
+    completed_at: string | null;
+    created_by: string;
+    assigned_to: string | null;
+    created_by_profile: { id: string; first_name: string | null; last_name: string | null } | null;
+    assigned_to_profile: { id: string; first_name: string | null; last_name: string | null } | null;
+  }> = [];
   if (tasksData && tasksData.length > 0) {
     const userIds = [
       ...new Set(
@@ -110,7 +139,7 @@ export default async function ProjectDetailPage({
       ),
     ];
 
-    let userProfiles: any[] = [];
+    let userProfiles: Array<{ id: string; first_name: string | null; last_name: string | null }> = [];
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("user_profiles")
@@ -122,6 +151,7 @@ export default async function ProjectDetailPage({
     // Map user profiles to tasks
     tasks = tasksData.map((task) => ({
       ...task,
+      tags: task.tags || [],
       created_by_profile:
         userProfiles.find((profile) => profile.id === task.created_by) || null,
       assigned_to_profile:

@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useMemo, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { login, signup } from './actions'
 import { Button } from '@/components/ui/button'
@@ -28,7 +28,7 @@ export default function LoginPage() {
         toast.error(loginState.error || loginState.message)
       }
     }
-  }, [loginState, nextParam])
+  }, [loginState, nextParam, router])
 
   // Handle signup state changes
   useEffect(() => {

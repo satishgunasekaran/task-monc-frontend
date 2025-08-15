@@ -10,7 +10,16 @@ import { updateProfile } from '@/app/(site)/profile/actions'
 
 interface ProfileFormProps {
   user: User
-  profile: any
+  profile: {
+    first_name?: string | null;
+    last_name?: string | null;
+    phone?: string | null;
+    bio?: string | null;
+    website?: string | null;
+    location?: string | null;
+    timezone?: string | null;
+    avatar_url?: string | null;
+  } | null
 }
 
 export function ProfileForm({ user, profile }: ProfileFormProps) {
@@ -25,7 +34,7 @@ export function ProfileForm({ user, profile }: ProfileFormProps) {
       } else {
         toast.success('Profile updated successfully!')
       }
-    } catch (error) {
+    } catch {
       toast.error('An unexpected error occurred')
     } finally {
       setLoading(false)
