@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import PageContainer from "@/components/layout/page-container";
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
@@ -26,14 +27,14 @@ export default async function ProjectsPage() {
 
   if (!activeOrgId) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="text-center">
+      <PageContainer>
+        <div className="text-center w-full">
           <h1 className="text-2xl font-bold mb-2">No Organization Selected</h1>
           <p className="text-muted-foreground">
             Please select an organization to view projects.
           </p>
         </div>
-      </div>
+      </PageContainer>
     );
   }
 
@@ -105,35 +106,37 @@ export default async function ProjectsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-6xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Projects</h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            Manage your organization&apos;s projects and track progress.
-          </p>
+    <PageContainer>
+      <div className="w-full max-w-6xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">Projects</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
+              Manage your organization&apos;s projects and track progress.
+            </p>
+          </div>
+          <CreateProjectForm />
         </div>
-        <CreateProjectForm />
-      </div>
 
-      <div className="space-y-6">
-        {projects && projects.length > 0 ? (
-          <ProjectsList projects={projects} />
-        ) : (
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle>No Projects Yet</CardTitle>
-              <CardDescription>
-                Get started by creating your first project for this
-                organization.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <CreateProjectForm />
-            </CardContent>
-          </Card>
-        )}
+        <div className="space-y-6">
+          {projects && projects.length > 0 ? (
+            <ProjectsList projects={projects} />
+          ) : (
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle>No Projects Yet</CardTitle>
+                <CardDescription>
+                  Get started by creating your first project for this
+                  organization.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <CreateProjectForm />
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
