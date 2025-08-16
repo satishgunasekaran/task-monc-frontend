@@ -5,6 +5,7 @@ import { ModeToggle } from "@/components/ui/theme-toggle";
 import React from "react";
 import { useParams, usePathname } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -120,9 +121,10 @@ export function Header() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <header className="flex h-14 items-center border-b bg-background px-6 select-none">
-      <div className="flex items-center gap-3">
-        <SidebarTrigger />
+    <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+      <div className="flex items-center gap-2 px-4">
+        <SidebarTrigger className="-ml-1" />
+        <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((breadcrumb, index) => (
@@ -142,7 +144,7 @@ export function Header() {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2 px-4">
         <ModeToggle />
       </div>
     </header>
