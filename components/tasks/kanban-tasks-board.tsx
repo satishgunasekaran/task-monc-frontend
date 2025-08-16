@@ -74,7 +74,6 @@ export function KanbanTasksBoard({
   );
   const [isUpdating, setIsUpdating] = useState(false);
   const [showDueTodayOnly, setShowDueTodayOnly] = useState(false);
-
   // Update tasks when initialTasks changes
   useEffect(() => {
     setAllTasks(transformTasksForKanban(initialTasks));
@@ -92,19 +91,6 @@ export function KanbanTasksBoard({
   const dueTodayCount = useMemo(() => {
     return allTasks.filter((task) => isDateToday(task.due_date)).length;
   }, [allTasks]);
-
-  const handleDataChange = (newData: KanbanTask[]) => {
-    // Don't automatically update - we'll handle this manually
-  };
-
-  const handleDragStart = (event: any) => {
-    // Store the original state when drag starts
-  };
-
-  const handleDragOver = (event: any) => {
-    // Don't handle drag over - let the visual feedback happen but prevent data changes
-    return;
-  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     console.log("=== DRAG END CALLED ===", event);
@@ -270,9 +256,6 @@ export function KanbanTasksBoard({
         <KanbanProvider
           columns={statusColumns}
           data={tasks}
-          onDataChange={handleDataChange}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           {(column) => (
