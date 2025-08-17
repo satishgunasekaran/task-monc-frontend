@@ -99,6 +99,8 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
   children,
   className,
 }: KanbanCardProps<T>) => {
+  const isDisabled = className?.includes("pointer-events-none");
+
   const {
     attributes,
     listeners,
@@ -108,6 +110,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
     isDragging,
   } = useSortable({
     id,
+    disabled: isDisabled,
   });
   const { activeCardId } = useContext(KanbanContext) as KanbanContextProps;
 
@@ -116,12 +119,15 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
     transform: CSS.Transform.toString(transform),
   };
 
+  const dragProps = isDisabled ? {} : { ...listeners, ...attributes };
+
   return (
     <>
-      <div style={style} {...listeners} {...attributes} ref={setNodeRef}>
+      <div style={style} {...dragProps} ref={setNodeRef}>
         <Card
           className={cn(
-            "cursor-grab gap-4 rounded-md p-3 shadow-sm",
+            "gap-4 rounded-md p-3 shadow-sm",
+            !isDisabled && "cursor-grab",
             isDragging && "pointer-events-none cursor-grabbing opacity-30",
             className,
           )}
@@ -129,7 +135,7 @@ export const KanbanCard = <T extends KanbanItemProps = KanbanItemProps>({
           {children ?? <p className="m-0 font-medium text-sm">{name}</p>}
         </Card>
       </div>
-      {activeCardId === id && (
+      {activeCardId === id && !isDisabled && (
         <t.In>
           <Card
             className={cn(

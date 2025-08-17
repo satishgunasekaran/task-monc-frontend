@@ -72,12 +72,20 @@ export function KanbanTasksBoard({
   const [allTasks, setAllTasks] = useState<KanbanTask[]>(() =>
     transformTasksForKanban(initialTasks),
   );
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatingTaskIds, setUpdatingTaskIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [isMounted, setIsMounted] = useState(false);
   const [showDueTodayOnly, setShowDueTodayOnly] = useState(false);
   // Update tasks when initialTasks changes
   useEffect(() => {
     setAllTasks(transformTasksForKanban(initialTasks));
   }, [initialTasks]);
+
+  // Handle hydration
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Filter tasks based on due today filter
   const tasks = useMemo(() => {
@@ -116,8 +124,9 @@ export function KanbanTasksBoard({
       return;
     }
 
-    if (isUpdating) {
-      console.log("Already updating, exiting");
+    // Check if this specific task is already being updated
+    if (updatingTaskIds.has(activeTask.id)) {
+      console.log("Task is already being updated, exiting");
       return;
     }
 
@@ -179,7 +188,7 @@ export function KanbanTasksBoard({
     }
 
     console.log("Task moved, updating database...");
-    setIsUpdating(true);
+    setUpdatingTaskIds((prev) => new Set(prev).add(activeTask.id));
 
     try {
       console.log("Calling server action with:", {
@@ -215,7 +224,11 @@ export function KanbanTasksBoard({
       // Revert local changes
       setAllTasks(originalTasks);
     } finally {
-      setIsUpdating(false);
+      setUpdatingTaskIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(activeTask.id);
+        return newSet;
+      });
     }
   };
 
@@ -272,78 +285,92 @@ export function KanbanTasksBoard({
               </div>
             </KanbanHeader>
             <KanbanCards id={column.id}>
-              {(task: KanbanTask) => (
-                <KanbanCard
-                  key={task.id}
-                  id={task.id}
-                  name={task.name}
-                  column={task.column}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-1 flex-1">
-                      <p className="m-0 font-medium text-sm line-clamp-2">
-                        {task.title}
-                      </p>
-                      {task.description && (
-                        <p className="m-0 text-muted-foreground text-xs line-clamp-2">
-                          {task.description}
+              {(task: KanbanTask) => {
+                const isTaskUpdating =
+                  isMounted && updatingTaskIds.has(task.id);
+                return (
+                  <KanbanCard
+                    key={task.id}
+                    id={task.id}
+                    name={task.name}
+                    column={task.column}
+                    className={
+                      isTaskUpdating
+                        ? "opacity-50 pointer-events-none cursor-not-allowed"
+                        : ""
+                    }
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col gap-1 flex-1">
+                        <p className="m-0 font-medium text-sm line-clamp-2">
+                          {task.title}
+                          {isMounted && isTaskUpdating && (
+                            <span className="ml-2 text-xs text-muted-foreground animate-pulse">
+                              Updating...
+                            </span>
+                          )}
                         </p>
-                      )}
+                        {task.description && (
+                          <p className="m-0 text-muted-foreground text-xs line-clamp-2">
+                            {task.description}
+                          </p>
+                        )}
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className={`text-xs font-medium ${priorityColors[task.priority]} shrink-0`}
+                      >
+                        {task.priority}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className={`text-xs font-medium ${priorityColors[task.priority]} shrink-0`}
-                    >
-                      {task.priority}
-                    </Badge>
-                  </div>
 
-                  {task.tags && task.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {task.tags.slice(0, 3).map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-xs px-1"
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                      {task.tags.length > 3 && (
-                        <Badge variant="outline" className="text-xs px-1">
-                          +{task.tags.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-2">
-                    {task.assigned_to_profile && (
-                      <div className="flex items-center gap-1">
-                        <Avatar className="h-4 w-4">
-                          <AvatarImage src="" />
-                          <AvatarFallback className="text-xs">
-                            {task.assigned_to_profile.first_name?.[0]}
-                            {task.assigned_to_profile.last_name?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-muted-foreground">
-                          {task.assigned_to_profile.first_name}{" "}
-                          {task.assigned_to_profile.last_name}
-                        </span>
+                    {task.tags && task.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {task.tags.slice(0, 3).map((tag, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs px-1"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                        {task.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs px-1">
+                            +{task.tags.length - 3}
+                          </Badge>
+                        )}
                       </div>
                     )}
-                    {task.due_date && (
-                      <div className="flex items-center gap-1">
-                        <CalendarDays className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(task.due_date).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </KanbanCard>
-              )}
+
+                    <div className="flex items-center justify-between mt-2">
+                      {task.assigned_to_profile && (
+                        <div className="flex items-center gap-1">
+                          <Avatar className="h-4 w-4">
+                            <AvatarImage src="" />
+                            <AvatarFallback className="text-xs">
+                              {task.assigned_to_profile.first_name?.[0]}
+                              {task.assigned_to_profile.last_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-xs text-muted-foreground">
+                            {task.assigned_to_profile.first_name}{" "}
+                            {task.assigned_to_profile.last_name}
+                          </span>
+                        </div>
+                      )}
+                      {task.due_date && (
+                        <div className="flex items-center gap-1">
+                          <CalendarDays className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(task.due_date).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </KanbanCard>
+                );
+              }}
             </KanbanCards>
           </KanbanBoard>
         )}
