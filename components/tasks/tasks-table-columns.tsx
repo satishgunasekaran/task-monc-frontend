@@ -2,12 +2,14 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { ColumnDef } from "@/components/ui/shadcn-io/table";
 import { TableColumnHeader } from "@/components/ui/shadcn-io/table";
 import { TaskWithProfiles } from "@/lib/types";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Eye, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { TaskForm } from "./create-task-form";
 
 type ExtendedTaskWithProfiles = TaskWithProfiles & {
   project_name?: string | null;
@@ -226,6 +228,35 @@ export function getTasksTableColumns(onTaskClick?: (task: ExtendedTaskWithProfil
           <span className="text-sm text-muted-foreground">
             {format(date, "MMM d, yyyy")}
           </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const task = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <TaskForm 
+              task={task}
+              mode="view"
+              trigger={
+                <Button size="sm" variant="ghost">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              }
+            />
+            <TaskForm 
+              task={task}
+              mode="edit"
+              trigger={
+                <Button size="sm" variant="ghost">
+                  <Edit className="h-4 w-4" />
+                </Button>
+              }
+            />
+          </div>
         );
       },
     },

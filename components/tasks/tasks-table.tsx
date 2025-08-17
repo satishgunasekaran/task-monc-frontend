@@ -13,7 +13,6 @@ import {
 import { TaskWithProfiles } from "@/lib/types";
 import { TasksTableFilters, DateFilter } from "./tasks-table-filters";
 import { getTasksTableColumns } from "./tasks-table-columns";
-import { TaskViewSidebar } from "./task-view-sidebar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { applyAllFilters } from "./tasks-table-utils";
 import ScrollableContainer from "../layout/scrollable-container";
@@ -33,9 +32,6 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
   const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
   const [projectFilter, setProjectFilter] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
-  const [selectedTask, setSelectedTask] =
-    useState<ExtendedTaskWithProfiles | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,13 +65,9 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
   // Calculate pagination values
   const totalPages = Math.ceil(filteredTasks.length / pageSize);
 
-  // Generate columns with click handler
+  // Generate columns
   const columns = useMemo(
-    () =>
-      getTasksTableColumns((task) => {
-        setSelectedTask(task);
-        setIsSidebarOpen(true);
-      }),
+    () => getTasksTableColumns(),
     [],
   );
 
@@ -87,10 +79,6 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
     new Set(tasks.map((task) => task.project_name || "No Project")),
   ).sort();
 
-  const handleTaskSave = (updatedTask: ExtendedTaskWithProfiles) => {
-    console.log("Saving task:", updatedTask);
-    setIsSidebarOpen(false);
-  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -175,16 +163,6 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
         </div>
       )}
 
-      {/* Task View Sidebar */}
-      <TaskViewSidebar
-        task={selectedTask}
-        isOpen={isSidebarOpen}
-        onClose={() => {
-          setIsSidebarOpen(false);
-          setSelectedTask(null);
-        }}
-        onSave={handleTaskSave}
-      />
     </div>
   );
 }

@@ -1,11 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Plus } from "lucide-react";
+import { 
+  CalendarIcon, 
+  Plus, 
+  Save, 
+  X, 
+  Edit, 
+  Calendar as CalendarLucide, 
+  Clock, 
+  User, 
+  Tag as TagIcon, 
+  FileText, 
+  AlertCircle 
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +32,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Popover,
   PopoverContent,
@@ -40,10 +55,12 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { createTask, updateTask } from "@/app/(site)/projects/task-actions";
 import { toast } from "sonner";
 import { Task } from "./types";
+import { useTaskSidebar, TaskFormMode } from "./task-sidebar-provider";
 
 const formSchema = z.object({
   title: z.string().min(1, "Task title is required"),
@@ -54,20 +71,43 @@ const formSchema = z.object({
   tags: z.string().optional(),
 });
 
-interface CreateTaskFormProps {
+interface TaskFormProps {
   projectId?: string;
   task?: Task;
   trigger?: React.ReactNode;
+  mode?: 'create' | 'edit' | 'view';
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onTaskCreated?: (task: Task) => void;
+  onTaskUpdated?: (task: Task) => void;
+  onTaskDeleted?: (taskId: string) => void;
 }
 
-export function CreateTaskForm({
+// Legacy component name for backwards compatibility
+export function CreateTaskForm(props: TaskFormProps) {
+  return <TaskForm {...props} />;
+}
+
+export function TaskForm({
   projectId,
   task,
   trigger,
-}: CreateTaskFormProps) {
-  const isEdit = !!task;
-  const [open, setOpen] = useState(false);
+  mode = task ? 'edit' : 'create',
+  open: controlledOpen,
+  onOpenChange,
+  onTaskCreated,
+  onTaskUpdated,
+  onTaskDeleted,
+}: TaskFormProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
+  
+  const [isEditing, setIsEditing] = useState(mode !== 'view');
   const [isLoading, setIsLoading] = useState(false);
+  const isView = mode === 'view';
+  const isEdit = mode === 'edit' || (mode !== 'create' && !!task);
+  const readOnly = isView && !isEditing;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,6 +122,8 @@ export function CreateTaskForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (readOnly) return;
+    
     setIsLoading(true);
     try {
       const formData = new FormData();
@@ -102,10 +144,24 @@ export function CreateTaskForm({
           ? await updateTask(task.id, formData)
           : await createTask(formData);
       if (result.success) {
+        const updatedTask = result.data;
         toast.success(isEdit ? "Task updated successfully" : "Task created");
+        
+        // Call appropriate callback to update parent state
+        if (isEdit && onTaskUpdated && updatedTask) {
+          onTaskUpdated(updatedTask);
+        } else if (!isEdit && onTaskCreated && updatedTask) {
+          onTaskCreated(updatedTask);
+        }
+        
         setOpen(false);
         if (!isEdit) {
           form.reset();
+        }
+        
+        // If in view mode and was editing, switch back to view mode
+        if (isView && isEditing) {
+          setIsEditing(false);
         }
       } else {
         console.error(
@@ -124,6 +180,21 @@ export function CreateTaskForm({
     }
   }
 
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const getTitle = () => {
+    if (mode === 'view') return task?.title || 'Task Details';
+    return isEdit ? 'Edit Task' : 'Create New Task';
+  };
+
+  const getButtonText = () => {
+    if (isView && !isEditing) return 'Edit';
+    if (isLoading) return isEdit ? 'Updating...' : 'Creating...';
+    return isEdit ? 'Update Task' : 'Create Task';
+  };
+
   const defaultTrigger = (
     <Button>
       <Plus className="mr-2 h-4 w-4" />
@@ -137,9 +208,30 @@ export function CreateTaskForm({
       <SheetContent className="flex flex-col h-full p-0 w-full sm:max-w-md">
         {/* Fixed Header */}
         <div className="px-6 py-4 border-b">
-          <SheetHeader>
-            <SheetTitle>{isEdit ? "Edit Task" : "Create New Task"}</SheetTitle>
-          </SheetHeader>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <SheetHeader>
+                <SheetTitle>{getTitle()}</SheetTitle>
+              </SheetHeader>
+            </div>
+            {isView && (
+              <div className="flex gap-2 ml-4">
+                <Button size="sm" variant="outline" onClick={handleEditToggle}>
+                  {isEditing ? (
+                    <>
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Scrollable Form Content */}
@@ -153,7 +245,7 @@ export function CreateTaskForm({
                   <FormItem>
                     <FormLabel>Task Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter task title" {...field} />
+                      <Input placeholder="Enter task title" readOnly={readOnly} {...field} />
                     </FormControl>
                     <FormDescription>
                       Choose a clear, descriptive title for your task.
@@ -172,6 +264,7 @@ export function CreateTaskForm({
                       <Textarea
                         placeholder="Describe the task..."
                         className="min-h-[100px] resize-none"
+                        readOnly={readOnly}
                         {...field}
                       />
                     </FormControl>
@@ -192,6 +285,7 @@ export function CreateTaskForm({
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        disabled={readOnly}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -221,6 +315,7 @@ export function CreateTaskForm({
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        disabled={readOnly}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -256,6 +351,7 @@ export function CreateTaskForm({
                         <FormControl>
                           <Button
                             variant={"outline"}
+                            disabled={readOnly}
                             className={cn(
                               "w-full pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground",
@@ -297,7 +393,7 @@ export function CreateTaskForm({
                   <FormItem>
                     <FormLabel>Tags</FormLabel>
                     <FormControl>
-                      <Input placeholder="frontend, api, urgent" {...field} />
+                      <Input placeholder="frontend, api, urgent" readOnly={readOnly} {...field} />
                     </FormControl>
                     <FormDescription>
                       Separate tags with commas to organize tasks.
@@ -311,24 +407,20 @@ export function CreateTaskForm({
         </div>
 
         {/* Fixed Footer */}
-        <div className="px-6 py-4 border-t bg-background">
-          <SheetFooter>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              {isLoading
-                ? isEdit
-                  ? "Updating..."
-                  : "Creating..."
-                : isEdit
-                  ? "Update Task"
-                  : "Create Task"}
-            </Button>
-          </SheetFooter>
-        </div>
+        {!readOnly && (
+          <div className="px-6 py-4 border-t bg-background">
+            <SheetFooter>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+                onClick={form.handleSubmit(onSubmit)}
+              >
+                {getButtonText()}
+              </Button>
+            </SheetFooter>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
