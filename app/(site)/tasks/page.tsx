@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getActiveOrgIdServer } from "@/utils/active-org/server";
 import { TasksTable } from "@/components/tasks/tasks-table";
-import { CreateTaskForm } from "@/components/tasks/create-task-form";
+import { CreateTaskForm } from "@/components/tasks/task-form";
 import PageContainer from "@/components/layout/page-container";
 import { TaskWithProfiles } from "@/lib/types";
 import {

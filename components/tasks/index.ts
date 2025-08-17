@@ -2,7 +2,7 @@
 export { TasksTable } from './tasks-table';
 
 // Task forms and management
-export { TaskForm, CreateTaskForm } from './create-task-form';
+export { TaskForm, CreateTaskForm } from './task-form';
 export { TaskSidebarProvider, useTaskSidebar } from './task-sidebar-provider';
 export type { TaskFormMode } from './task-sidebar-provider';
 

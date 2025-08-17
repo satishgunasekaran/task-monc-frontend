@@ -73,7 +73,7 @@ export async function createTask(formData: FormData) {
     const { data: newTask, error } = await supabase
         .from('tasks')
         .insert(taskData)
-        .select('id')
+        .select('*')
         .single()
 
     if (error) {
@@ -144,10 +144,12 @@ export async function updateTask(taskId: string, formData: FormData) {
         return { error: 'Task not found or access denied' }
     }
 
-    const { error } = await supabase
+    const { data: updatedTask, error } = await supabase
         .from('tasks')
         .update(updateData)
         .eq('id', taskId)
+        .select('*')
+        .single()
 
     if (error) {
         console.error('Task update error:', error)
@@ -156,7 +158,7 @@ export async function updateTask(taskId: string, formData: FormData) {
 
     revalidatePath('/tasks')
     revalidatePath(`/projects/${task.project_id}`)
-    return { success: true }
+    return { success: true, task: updatedTask }
 }
 
 export async function updateTaskPositionAndStatus(

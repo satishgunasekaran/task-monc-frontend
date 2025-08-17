@@ -9,7 +9,7 @@ import { TaskWithProfiles } from "@/lib/types";
 import { Calendar, Clock, Eye, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { TaskForm } from "./create-task-form";
+import { TaskForm } from "./task-form";
 
 type ExtendedTaskWithProfiles = TaskWithProfiles & {
   project_name?: string | null;

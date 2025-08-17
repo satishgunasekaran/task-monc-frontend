@@ -5,7 +5,7 @@ import { TaskWithProfiles } from "@/lib/types";
 import { ViewToggle, ViewMode } from "@/components/ui/view-toggle";
 import { KanbanTasksBoard } from "@/components/tasks/kanban-tasks-board";
 import { TasksTable } from "@/components/tasks/tasks-table";
-import { CreateTaskForm } from "@/components/tasks/create-task-form";
+import { CreateTaskForm } from "@/components/tasks/task-form";
 
 interface ProjectTasksViewProps {
   tasks: TaskWithProfiles[];
