@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues, Path } from "react-hook-form";
 import {
   FormField,
   FormItem,
@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
-interface TextareaFieldProps {
-  form: UseFormReturn<any>;
-  name: string;
+interface TextareaFieldProps<T extends FieldValues> {
+  form: UseFormReturn<T>;
+  name: Path<T>;
   label?: React.ReactNode;
   description?: React.ReactNode;
   placeholder?: string;
@@ -22,7 +22,7 @@ interface TextareaFieldProps {
   className?: string;
 }
 
-export function TextareaField({
+export function TextareaField<T extends FieldValues>({
   form,
   name,
   label,
@@ -30,7 +30,7 @@ export function TextareaField({
   placeholder,
   readOnly,
   className,
-}: TextareaFieldProps) {
+}: TextareaFieldProps<T>) {
   return (
     <FormField
       control={form.control}

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues, Path } from "react-hook-form";
 import {
   FormField,
   FormItem,
@@ -13,23 +13,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-interface TagsFieldProps {
-  form: UseFormReturn<any>;
-  name: string;
+interface TagsFieldProps<T extends FieldValues> {
+  form: UseFormReturn<T>;
+  name: Path<T>;
   label?: React.ReactNode;
   description?: React.ReactNode;
   placeholder?: string;
   readOnly?: boolean;
 }
 
-export function TagsField({
+export function TagsField<T extends FieldValues>({
   form,
   name,
   label,
   description,
   placeholder,
   readOnly,
-}: TagsFieldProps) {
+}: TagsFieldProps<T>) {
   return (
     <FormField
       control={form.control}

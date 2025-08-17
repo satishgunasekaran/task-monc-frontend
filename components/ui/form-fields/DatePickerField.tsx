@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues, Path } from "react-hook-form";
 import { format } from "date-fns";
 import {
   FormField,
@@ -20,23 +20,23 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
-interface DatePickerFieldProps {
-  form: UseFormReturn<any>;
-  name: string;
+interface DatePickerFieldProps<T extends FieldValues> {
+  form: UseFormReturn<T>;
+  name: Path<T>;
   label?: React.ReactNode;
   description?: React.ReactNode;
   placeholder?: string;
   readOnly?: boolean;
 }
 
-export function DatePickerField({
+export function DatePickerField<T extends FieldValues>({
   form,
   name,
   label,
   description,
   placeholder = "Pick a date",
   readOnly,
-}: DatePickerFieldProps) {
+}: DatePickerFieldProps<T>) {
   return (
     <FormField
       control={form.control}
@@ -53,7 +53,7 @@ export function DatePickerField({
                   className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
                 >
                   {field.value ? (
-                    format(field.value, "PPP")
+                    format(field.value as Date, "PPP")
                   ) : (
                     <span>{placeholder}</span>
                   )}
@@ -68,8 +68,8 @@ export function DatePickerField({
             >
               <Calendar
                 mode="single"
-                selected={field.value}
-                onSelect={(date) => field.onChange(date)}
+                selected={field.value as Date | undefined}
+                onSelect={(date: Date | undefined) => field.onChange(date)}
                 disabled={(date) => date < new Date("1900-01-01")}
                 initialFocus
               />

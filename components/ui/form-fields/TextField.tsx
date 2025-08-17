@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues, Path } from "react-hook-form";
 import {
   FormField,
   FormItem,
@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-interface TextFieldProps {
-  form: UseFormReturn<any>;
-  name: string;
+interface TextFieldProps<T extends FieldValues> {
+  form: UseFormReturn<T>;
+  name: Path<T>;
   label?: React.ReactNode;
   description?: React.ReactNode;
   placeholder?: string;
@@ -23,7 +23,7 @@ interface TextFieldProps {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
-export function TextField({
+export function TextField<T extends FieldValues>({
   form,
   name,
   label,
@@ -32,7 +32,7 @@ export function TextField({
   readOnly,
   type = "text",
   inputProps,
-}: TextFieldProps) {
+}: TextFieldProps<T>) {
   return (
     <FormField
       control={form.control}

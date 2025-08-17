@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,7 +20,6 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import { createTask, updateTask } from "@/app/(site)/projects/task-actions";
 import { toast } from "sonner";
@@ -62,7 +61,6 @@ export function TaskForm({
   onOpenChange,
   onTaskCreated,
   onTaskUpdated,
-  onTaskDeleted,
 }: TaskFormProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;

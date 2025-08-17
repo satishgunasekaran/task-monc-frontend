@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, FieldValues, Path } from "react-hook-form";
 import {
   FormField,
   FormItem,
@@ -23,9 +23,9 @@ interface Option {
   label: React.ReactNode;
 }
 
-interface SelectFieldProps {
-  form: UseFormReturn<any>;
-  name: string;
+interface SelectFieldProps<T extends FieldValues> {
+  form: UseFormReturn<T>;
+  name: Path<T>;
   label?: React.ReactNode;
   description?: React.ReactNode;
   placeholder?: string;
@@ -33,7 +33,7 @@ interface SelectFieldProps {
   readOnly?: boolean;
 }
 
-export function SelectField({
+export function SelectField<T extends FieldValues>({
   form,
   name,
   label,
@@ -41,7 +41,7 @@ export function SelectField({
   placeholder,
   options,
   readOnly,
-}: SelectFieldProps) {
+}: SelectFieldProps<T>) {
   return (
     <FormField
       control={form.control}
