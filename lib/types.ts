@@ -47,4 +47,5 @@ export type TaskWithProfiles = Task & {
         first_name: string | null;
         last_name: string | null;
     } | null;
+    project_name?: string | null;
 };

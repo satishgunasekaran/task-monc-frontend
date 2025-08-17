@@ -220,7 +220,7 @@ export function KanbanTasksBoard({
   };
 
   return (
-    <div className="h-full flex flex-col gap-4">
+    <div className="flex flex-col gap-4 flex-1">
       {/* Filter Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -252,104 +252,102 @@ export function KanbanTasksBoard({
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1">
-        <KanbanProvider
-          columns={statusColumns}
-          data={tasks}
-          onDragEnd={handleDragEnd}
-        >
-          {(column) => (
-            <KanbanBoard id={column.id} key={column.id}>
-              <KanbanHeader>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: column.color }}
-                  />
-                  <span>{column.name}</span>
-                  <span className="text-muted-foreground">
-                    ({tasks.filter((task) => task.column === column.id).length})
-                  </span>
-                </div>
-              </KanbanHeader>
-              <KanbanCards id={column.id}>
-                {(task: KanbanTask) => (
-                  <KanbanCard
-                    key={task.id}
-                    id={task.id}
-                    name={task.name}
-                    column={task.column}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex flex-col gap-1 flex-1">
-                        <p className="m-0 font-medium text-sm line-clamp-2">
-                          {task.title}
+      <KanbanProvider
+        columns={statusColumns}
+        data={tasks}
+        onDragEnd={handleDragEnd}
+      >
+        {(column) => (
+          <KanbanBoard id={column.id} key={column.id}>
+            <KanbanHeader>
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: column.color }}
+                />
+                <span>{column.name}</span>
+                <span className="text-muted-foreground">
+                  ({tasks.filter((task) => task.column === column.id).length})
+                </span>
+              </div>
+            </KanbanHeader>
+            <KanbanCards id={column.id}>
+              {(task: KanbanTask) => (
+                <KanbanCard
+                  key={task.id}
+                  id={task.id}
+                  name={task.name}
+                  column={task.column}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col gap-1 flex-1">
+                      <p className="m-0 font-medium text-sm line-clamp-2">
+                        {task.title}
+                      </p>
+                      {task.description && (
+                        <p className="m-0 text-muted-foreground text-xs line-clamp-2">
+                          {task.description}
                         </p>
-                        {task.description && (
-                          <p className="m-0 text-muted-foreground text-xs line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className={`text-xs font-medium ${priorityColors[task.priority]} shrink-0`}
-                      >
-                        {task.priority}
-                      </Badge>
+                      )}
                     </div>
+                    <Badge
+                      variant="secondary"
+                      className={`text-xs font-medium ${priorityColors[task.priority]} shrink-0`}
+                    >
+                      {task.priority}
+                    </Badge>
+                  </div>
 
-                    {task.tags && task.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {task.tags.slice(0, 3).map((tag, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="text-xs px-1"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                        {task.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs px-1">
-                            +{task.tags.length - 3}
-                          </Badge>
-                        )}
+                  {task.tags && task.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {task.tags.slice(0, 3).map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-xs px-1"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                      {task.tags.length > 3 && (
+                        <Badge variant="outline" className="text-xs px-1">
+                          +{task.tags.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-2">
+                    {task.assigned_to_profile && (
+                      <div className="flex items-center gap-1">
+                        <Avatar className="h-4 w-4">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="text-xs">
+                            {task.assigned_to_profile.first_name?.[0]}
+                            {task.assigned_to_profile.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-muted-foreground">
+                          {task.assigned_to_profile.first_name}{" "}
+                          {task.assigned_to_profile.last_name}
+                        </span>
                       </div>
                     )}
-
-                    <div className="flex items-center justify-between mt-2">
-                      {task.assigned_to_profile && (
-                        <div className="flex items-center gap-1">
-                          <Avatar className="h-4 w-4">
-                            <AvatarImage src="" />
-                            <AvatarFallback className="text-xs">
-                              {task.assigned_to_profile.first_name?.[0]}
-                              {task.assigned_to_profile.last_name?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-xs text-muted-foreground">
-                            {task.assigned_to_profile.first_name}{" "}
-                            {task.assigned_to_profile.last_name}
-                          </span>
-                        </div>
-                      )}
-                      {task.due_date && (
-                        <div className="flex items-center gap-1">
-                          <CalendarDays className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(task.due_date).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </KanbanCard>
-                )}
-              </KanbanCards>
-            </KanbanBoard>
-          )}
-        </KanbanProvider>
-      </div>
+                    {task.due_date && (
+                      <div className="flex items-center gap-1">
+                        <CalendarDays className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(task.due_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </KanbanCard>
+              )}
+            </KanbanCards>
+          </KanbanBoard>
+        )}
+      </KanbanProvider>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   FolderOpen,
+  CheckSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -249,6 +250,16 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {/* Tasks Menu Item */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/tasks"}>
+                  <Link href="/tasks">
+                    <CheckSquare />
+                    <span>Tasks</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               {/* Projects Section with Sub-navigation */}
               <Collapsible open={projectsOpen} onOpenChange={setProjectsOpen}>

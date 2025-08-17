@@ -2,8 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getActiveOrgIdServer } from "@/utils/active-org/server";
 import { ProjectHeader } from "@/components/projects/project-header";
-import { KanbanTasksBoard } from "@/components/tasks/kanban-tasks-board";
-import { CreateTaskForm } from "@/components/tasks/create-task-form";
+import { ProjectTasksView } from "@/components/projects/project-tasks-view";
 import PageContainer from "@/components/layout/page-container";
 import { ProjectWithCreator, TaskWithProfiles } from "@/lib/types";
 
@@ -146,16 +145,12 @@ export default async function ProjectDetailPage({
     <PageContainer scrollable={false}>
       <div className="flex flex-1 flex-col space-y-4 w-full">
         <ProjectHeader project={project} />
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold">Tasks</h2>
-            <p className="text-muted-foreground text-sm">
-              Manage tasks and track progress for this project.
-            </p>
-          </div>
-          <CreateTaskForm projectId={id} />
-        </div>
-        <KanbanTasksBoard initialTasks={tasks || []} projectId={id} />
+        <ProjectTasksView
+          tasks={tasks || []}
+          projectId={id}
+          projectName={project.name}
+          defaultView="kanban"
+        />
       </div>
     </PageContainer>
   );

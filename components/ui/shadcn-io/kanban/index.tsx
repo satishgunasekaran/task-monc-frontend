@@ -32,6 +32,7 @@ import tunnel from "tunnel-rat";
 import { Card } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import ScrollableContainer from "@/components/layout/scrollable-container";
 
 const t = tunnel();
 
@@ -162,7 +163,7 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
   const items = filteredData.map((item) => item.id);
 
   return (
-    <ScrollArea className="overflow-hidden">
+    <ScrollableContainer>
       <SortableContext items={items}>
         <div
           className={cn("flex flex-grow flex-col gap-2 p-2", className)}
@@ -172,7 +173,7 @@ export const KanbanCards = <T extends KanbanItemProps = KanbanItemProps>({
         </div>
       </SortableContext>
       <ScrollBar orientation="vertical" />
-    </ScrollArea>
+    </ScrollableContainer>
   );
 };
 
