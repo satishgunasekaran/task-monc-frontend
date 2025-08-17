@@ -45,7 +45,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextTopLoader color="hsl(var(--primary))" showSpinner={false} />
+        <NextTopLoader color="#e67e22" showSpinner={false} />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
