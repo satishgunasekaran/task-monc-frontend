@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   TableBody,
   TableCell,
@@ -102,7 +102,7 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
   };
 
   // Reset to first page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [globalFilter, statusFilter, priorityFilter, projectFilter, dateFilter]);
 

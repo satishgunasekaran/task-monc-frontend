@@ -21,7 +21,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TaskWithProfiles } from "@/lib/types";
+import { TaskWithProfiles, TaskStatus, TaskPriority } from "@/lib/types";
 import { 
   Calendar, 
   Clock, 
@@ -158,7 +158,7 @@ export function TaskViewSidebar({ task, isOpen, onClose, onSave }: TaskViewSideb
               {isEditing ? (
                 <Select
                   value={editedTask?.status}
-                  onValueChange={(value) => setEditedTask(prev => prev ? { ...prev, status: value as any } : null)}
+                  onValueChange={(value) => setEditedTask(prev => prev ? { ...prev, status: value as TaskStatus } : null)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -189,7 +189,7 @@ export function TaskViewSidebar({ task, isOpen, onClose, onSave }: TaskViewSideb
               {isEditing ? (
                 <Select
                   value={editedTask?.priority}
-                  onValueChange={(value) => setEditedTask(prev => prev ? { ...prev, priority: value as any } : null)}
+                  onValueChange={(value) => setEditedTask(prev => prev ? { ...prev, priority: value as TaskPriority } : null)}
                 >
                   <SelectTrigger>
                     <SelectValue />

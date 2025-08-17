@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Calendar, Filter, Search, Clock } from "lucide-react";
+import { Calendar, Filter, Search } from "lucide-react";
 
 export type DateFilter = "all" | "today" | "this_week" | "this_month" | "overdue" | "no_due_date";
 
