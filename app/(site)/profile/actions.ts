@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { UserProfileUpdate, OrganizationInsert } from '@/lib/types'
+import { ActionResult, success, failure } from '@/lib/action-result'
 
-export async function updateProfile(formData: FormData) {
+export async function updateProfile(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient()
 
   const {
@@ -12,7 +13,7 @@ export async function updateProfile(formData: FormData) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'User not authenticated' }
+    return failure('User not authenticated')
   }
 
   const data: UserProfileUpdate = {
@@ -38,14 +39,14 @@ export async function updateProfile(formData: FormData) {
 
   if (error) {
     console.error('Profile update error:', error)
-    return { error: 'Failed to update profile' }
+    return failure('Failed to update profile')
   }
 
   revalidatePath('/profile')
-  return { success: true }
+  return success()
 }
 
-export async function createOrganization(formData: FormData) {
+export async function createOrganization(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient()
 
   const {
@@ -53,7 +54,7 @@ export async function createOrganization(formData: FormData) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'User not authenticated' }
+    return failure('User not authenticated')
   }
 
   const name = formData.get('name') as string
@@ -62,13 +63,13 @@ export async function createOrganization(formData: FormData) {
   const logo_url = formData.get('logo_url') as string
 
   if (!name || !slug) {
-    return { error: 'Name and slug are required' }
+    return failure('Name and slug are required')
   }
 
   // Validate slug format
   const slugRegex = /^[a-z0-9-]+$/
   if (!slugRegex.test(slug)) {
-    return { error: 'Slug must contain only lowercase letters, numbers, and hyphens' }
+    return failure('Slug must contain only lowercase letters, numbers, and hyphens')
   }
 
   // Check if slug is already taken
@@ -80,7 +81,7 @@ export async function createOrganization(formData: FormData) {
     .single()
 
   if (existingOrg) {
-    return { error: 'This slug is already taken. Please choose a different one.' }
+    return failure('This slug is already taken. Please choose a different one.')
   }
 
   console.log('Existing org:', existingOrg)
@@ -102,7 +103,7 @@ export async function createOrganization(formData: FormData) {
 
   if (orgError) {
     console.error('Organization creation error:', orgError)
-    return { error: 'Failed to create organization' }
+    return failure('Failed to create organization')
   }
 
   // Add the user as owner of the organization
@@ -118,14 +119,14 @@ export async function createOrganization(formData: FormData) {
     console.error('Membership creation error:', membershipError)
     // Try to clean up the organization if membership creation fails
     await supabase.from('organizations').delete().eq('id', newOrg.id)
-    return { error: 'Failed to create organization membership' }
+    return failure('Failed to create organization membership')
   }
 
   revalidatePath('/profile')
-  return { success: true }
+  return success()
 }
 
-export async function inviteToOrganization(formData: FormData) {
+export async function inviteToOrganization(formData: FormData): Promise<ActionResult<{ invitation: Record<string, unknown> }>> {
   const supabase = await createClient()
 
   const {
@@ -133,7 +134,7 @@ export async function inviteToOrganization(formData: FormData) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'User not authenticated' }
+    return failure('User not authenticated')
   }
 
   const organization_id = formData.get('organization_id') as string
@@ -141,7 +142,7 @@ export async function inviteToOrganization(formData: FormData) {
   const role = (formData.get('role') as 'owner' | 'admin' | 'member') || 'member'
 
   if (!organization_id || !email) {
-    return { error: 'Organization and email are required' }
+    return failure('Organization and email are required')
   }
 
   const { data, error } = await supabase.rpc('create_org_invitation', {
@@ -154,19 +155,19 @@ export async function inviteToOrganization(formData: FormData) {
     console.error('Invite error:', error)
     const errorMessage = (error as { message?: string }).message;
     if (errorMessage && errorMessage.includes('invitation_already_exists')) {
-      return { error: 'An active invitation already exists for this email.' }
+      return failure('An active invitation already exists for this email.')
     }
     if (errorMessage && errorMessage.includes('duplicate key value')) {
-      return { error: 'An active invitation already exists for this email.' }
+      return failure('An active invitation already exists for this email.')
     }
-    return { error: 'Failed to create invitation' }
+    return failure('Failed to create invitation')
   }
 
   revalidatePath('/profile')
-  return { success: true, invitation: data }
+  return success({ invitation: data })
 }
 
-export async function acceptInvitation(token: string) {
+export async function acceptInvitation(token: string): Promise<ActionResult<{ membership: Record<string, unknown> }>> {
   const supabase = await createClient()
 
   const {
@@ -174,7 +175,7 @@ export async function acceptInvitation(token: string) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return { error: 'User not authenticated' }
+    return failure('User not authenticated')
   }
 
   const { data, error } = await supabase.rpc('accept_org_invitation', {
@@ -183,9 +184,9 @@ export async function acceptInvitation(token: string) {
 
   if (error) {
     console.error('Accept invite error:', error)
-    return { error: 'Failed to accept invitation' }
+    return failure('Failed to accept invitation')
   }
 
   revalidatePath('/profile')
-  return { success: true, membership: data }
+  return success({ membership: data })
 }

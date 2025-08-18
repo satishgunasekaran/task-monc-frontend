@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/components/providers/query-client-provider";
+import { AppProvider } from "@/components/providers/app-provider";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -52,10 +54,14 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NuqsAdapter>
-            <div className="min-h-screen">{children}</div>
-            <Toaster />
-          </NuqsAdapter>
+          <QueryProvider>
+            <AppProvider>
+              <NuqsAdapter>
+                <div className="min-h-screen">{children}</div>
+                <Toaster />
+              </NuqsAdapter>
+            </AppProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

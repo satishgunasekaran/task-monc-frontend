@@ -4,13 +4,8 @@ import { getActiveOrgIdServer } from "@/utils/active-org/server";
 import { ProjectsList } from "@/components/projects/projects-list";
 import { CreateProjectForm } from "@/components/projects/create-project-form";
 import PageContainer from "@/components/layout/page-container";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+// Card component not needed here; using PageContainer and EmptyState
+import EmptyState from "@/components/ui/empty-state";
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
@@ -126,18 +121,14 @@ export default async function ProjectsPage() {
           {projects && projects.length > 0 ? (
             <ProjectsList projects={projects} />
           ) : (
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle>No Projects Yet</CardTitle>
-                <CardDescription>
-                  Get started by creating your first project for this
-                  organization.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-center">
-                <CreateProjectForm />
-              </CardContent>
-            </Card>
+            <>
+              <EmptyState
+                title="No Projects Yet"
+                description={
+                  "Get started by creating your first project for this organization."
+                }
+              />
+            </>
           )}
         </div>
       </div>

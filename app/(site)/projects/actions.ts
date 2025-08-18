@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
 import { getActiveOrgIdServer } from '@/utils/active-org/server'
 import { ProjectInsert, ProjectUpdate } from '@/lib/types'
+import { success, failure } from '@/lib/action-result'
 
 export async function createProject(formData: FormData) {
     const supabase = await createClient()
@@ -13,13 +14,13 @@ export async function createProject(formData: FormData) {
     } = await supabase.auth.getUser()
 
     if (!user) {
-        return { error: 'User not authenticated' }
+        return failure('User not authenticated')
     }
 
     const activeOrgId = await getActiveOrgIdServer()
 
     if (!activeOrgId) {
-        return { error: 'No active organization found. Please select an organization before creating a project.' }
+        return failure('No active organization found. Please select an organization before creating a project.')
     }
 
     const name = formData.get('name') as string
@@ -29,7 +30,7 @@ export async function createProject(formData: FormData) {
     const status = formData.get('status') as string
 
     if (!name) {
-        return { error: 'Project name is required' }
+        return failure('Project name is required')
     }
 
     const projectData: ProjectInsert = {
@@ -50,11 +51,11 @@ export async function createProject(formData: FormData) {
 
     if (error) {
         console.error('Project creation error:', error)
-        return { error: `Failed to create project: ${error.message}` }
+        return failure(`Failed to create project: ${error.message}`)
     }
 
     revalidatePath('/projects')
-    return { success: true, project: newProject }
+    return success({ project: newProject })
 }
 
 export async function updateProject(projectId: string, formData: FormData) {
@@ -65,13 +66,13 @@ export async function updateProject(projectId: string, formData: FormData) {
     } = await supabase.auth.getUser()
 
     if (!user) {
-        return { error: 'User not authenticated' }
+        return failure('User not authenticated')
     }
 
     const activeOrgId = await getActiveOrgIdServer()
 
     if (!activeOrgId) {
-        return { error: 'No active organization selected' }
+        return failure('No active organization selected')
     }
 
     const name = formData.get('name') as string
@@ -81,7 +82,7 @@ export async function updateProject(projectId: string, formData: FormData) {
     const status = formData.get('status') as string
 
     if (!name) {
-        return { error: 'Project name is required' }
+        return failure('Project name is required')
     }
 
     const updateData: ProjectUpdate = {
@@ -100,12 +101,12 @@ export async function updateProject(projectId: string, formData: FormData) {
 
     if (error) {
         console.error('Project update error:', error)
-        return { error: 'Failed to update project' }
+        return failure('Failed to update project')
     }
 
     revalidatePath('/projects')
     revalidatePath(`/projects/${projectId}`)
-    return { success: true }
+    return success()
 }
 
 export async function deleteProject(projectId: string) {
@@ -116,13 +117,13 @@ export async function deleteProject(projectId: string) {
     } = await supabase.auth.getUser()
 
     if (!user) {
-        return { error: 'User not authenticated' }
+        return failure('User not authenticated')
     }
 
     const activeOrgId = await getActiveOrgIdServer()
 
     if (!activeOrgId) {
-        return { error: 'No active organization selected' }
+        return failure('No active organization selected')
     }
 
     const { error } = await supabase
@@ -133,9 +134,9 @@ export async function deleteProject(projectId: string) {
 
     if (error) {
         console.error('Project deletion error:', error)
-        return { error: 'Failed to delete project' }
+        return failure('Failed to delete project')
     }
 
     revalidatePath('/projects')
-    return { success: true }
+    return success()
 }

@@ -141,7 +141,7 @@ export default async function ProfilePage() {
               {organizations && organizations.length > 0 && <Separator />}
 
               {/* Create New Organization */}
-              <div className="space-y-4">
+              <div id="create-organization" className="space-y-4">
                 <h3 className="text-base md:text-lg font-semibold">
                   Create New Organization
                 </h3>

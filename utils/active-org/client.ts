@@ -28,9 +28,7 @@ export function setActiveOrgIdCookie(
   document.cookie = `${ACTIVE_ORG_COOKIE_NAME}=${encoded}; path=/; max-age=${maxAge}`
 }
 
-export function clearActiveOrgIdCookie() {
-  if (typeof document === "undefined") return
-  document.cookie = `${ACTIVE_ORG_COOKIE_NAME}=; path=/; max-age=0`
-}
+// Clearing the cookie can be done by setting max-age to 0 via setActiveOrgIdCookie.
+// We intentionally do not export a separate clear function to keep the API minimal.
 
 

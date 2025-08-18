@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { OrgMembersManager } from "@/components/org-members-manager";
 import { getActiveOrgIdServer } from "@/utils/active-org/server";
 import PageContainer from "@/components/layout/page-container";
+import { SettingsDangerZone } from "@/components/settings/danger-zone";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -38,6 +39,8 @@ export default async function SettingsPage() {
         </p>
 
         <OrgMembersManager />
+
+        <SettingsDangerZone />
       </div>
     </PageContainer>
   );

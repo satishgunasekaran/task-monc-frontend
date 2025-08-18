@@ -16,7 +16,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -44,13 +44,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { logout } from "@/app/login/actions";
-import { createClient as createSupabaseBrowserClient } from "@/utils/supabase/client";
-import {
-  getActiveOrgIdFromCookie,
-  setActiveOrgIdCookie,
-  ACTIVE_ORG_COOKIE_MAX_AGE,
-} from "@/utils/active-org/client";
-import { clearActiveOrgIdCookie } from "@/utils/active-org/client";
+import { useOrganizations, useProjects } from "@/hooks/use-sidebar-data";
+import { useActiveOrg } from "@/components/providers/app-provider";
 
 // Menu items.
 const items = [
@@ -60,16 +55,16 @@ const items = [
 ];
 
 export function AppSidebar() {
-  const router = useRouter();
   const pathname = usePathname();
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-  type Organization = { id: string; name: string; slug: string | null };
-  type Project = { id: string; name: string; status: string };
+  // Use our custom hooks for data fetching and active org management
+  const { data: organizations = [], isLoading: orgsLoading } =
+    useOrganizations();
+  const { activeOrgId, setActiveOrganization, validateActiveOrganization } =
+    useActiveOrg();
 
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [activeOrgId, setActiveOrgId] = useState<string | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { data: projects = [] } = useProjects(activeOrgId);
+
   const [projectsOpen, setProjectsOpen] = useState(() => {
     // Auto-open if we're on a projects page
     return pathname?.startsWith("/projects") ?? true;
@@ -80,100 +75,12 @@ export function AppSidebar() {
     [organizations, activeOrgId],
   );
 
+  // Validate active organization when organizations change
   useEffect(() => {
-    const initial = getActiveOrgIdFromCookie();
-    setActiveOrgId(initial);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data: userRes, error: authErr } = await supabase.auth.getUser();
-      if (authErr) return;
-      const user = userRes?.user;
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("organization_memberships")
-        .select(
-          `
-          organizations!inner (
-            id,
-            name,
-            slug
-          )
-        `,
-        )
-        .eq("user_id", user.id);
-
-      if (cancelled) return;
-      if (!error && data) {
-        console.log("Raw Supabase data:", data);
-
-        const orgs = data
-          .map((item) => {
-            // Handle the actual structure returned by Supabase
-            const org = Array.isArray(item.organizations)
-              ? item.organizations[0]
-              : item.organizations;
-            return org;
-          })
-          .filter(Boolean)
-          .sort((a: Organization, b: Organization) =>
-            a.name.localeCompare(b.name),
-          );
-
-        setOrganizations(orgs);
-
-        // If no active org set, or cookie points to an org the user isn't a member of,
-        // default to the first available org. If the user has no orgs, clear any cookie.
-        const cookiePointsToValidOrg =
-          activeOrgId && orgs.some((o) => o.id === activeOrgId);
-        const needsFallback = !activeOrgId || !cookiePointsToValidOrg;
-
-        if (orgs.length > 0 && needsFallback) {
-          const fallbackId = orgs[0].id;
-          setActiveOrgIdCookie(fallbackId, ACTIVE_ORG_COOKIE_MAX_AGE);
-          setActiveOrgId(fallbackId);
-          router.refresh();
-        } else if (orgs.length === 0 && activeOrgId) {
-          // User is not a member of any orgs anymore; clear cookie
-          clearActiveOrgIdCookie();
-          setActiveOrgId(null);
-          router.refresh();
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [supabase, router, activeOrgId]);
-
-  // Fetch projects when active organization changes
-  useEffect(() => {
-    if (!activeOrgId) {
-      setProjects([]);
-      return;
+    if (!orgsLoading && organizations.length >= 0) {
+      validateActiveOrganization(organizations);
     }
-
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from("projects")
-        .select("id, name, status")
-        .eq("organization_id", activeOrgId)
-        .order("created_at", { ascending: false });
-
-      if (cancelled) return;
-      if (!error && data) {
-        setProjects(data);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeOrgId, supabase]);
+  }, [organizations, orgsLoading, validateActiveOrganization]);
 
   // Auto-open projects section when navigating to projects pages
   useEffect(() => {
@@ -183,9 +90,7 @@ export function AppSidebar() {
   }, [pathname]);
 
   function handlePickOrg(orgId: string) {
-    setActiveOrgIdCookie(orgId, ACTIVE_ORG_COOKIE_MAX_AGE);
-    setActiveOrgId(orgId);
-    router.refresh();
+    setActiveOrganization(orgId);
   }
 
   return (
@@ -224,10 +129,21 @@ export function AppSidebar() {
                     ))
                   )}
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">+ Create organization</Link>
+                    <Link href="/profile#create-organization">
+                      + Create organization
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Quick link to organization settings */}
+              <Link
+                href="/settings"
+                className="ml-1 rounded p-1 hover:bg-muted/60 hover:text-muted-foreground"
+                aria-label="Organization settings"
+              >
+                <Settings className="h-4 w-4 opacity-80" />
+              </Link>
             </div>
           </SidebarGroupLabel>
           <SidebarGroupContent>

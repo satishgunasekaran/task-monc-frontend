@@ -29,10 +29,11 @@ export function ProfileForm({ user, profile }: ProfileFormProps) {
     setLoading(true)
     try {
       const result = await updateProfile(formData)
-      if (result.error) {
-        toast.error(result.error)
-      } else {
+      if (result.success) {
         toast.success('Profile updated successfully!')
+      } else {
+        // result is narrowed to the failure shape here
+        toast.error(result.error)
       }
     } catch {
       toast.error('An unexpected error occurred')

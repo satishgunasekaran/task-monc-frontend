@@ -41,7 +41,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { createProject, updateProject } from "@/app/(site)/projects/actions";
+import { useProjectMutations } from "@/hooks/use-project-mutations";
 import { toast } from "sonner";
 import { Project } from "./types";
 
@@ -58,17 +58,26 @@ interface CreateProjectFormProps {
   trigger?: React.ReactNode;
 }
 
-export function CreateProjectForm({ project, trigger }: CreateProjectFormProps) {
+export function CreateProjectForm({
+  project,
+  trigger,
+}: CreateProjectFormProps) {
   const isEdit = !!project;
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const {
+    createProject: createProjectMutation,
+    updateProject: updateProjectMutation,
+  } = useProjectMutations();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: project?.name || "",
       description: project?.description || "",
-      start_date: project?.start_date ? new Date(project.start_date) : undefined,
+      start_date: project?.start_date
+        ? new Date(project.start_date)
+        : undefined,
       due_date: project?.due_date ? new Date(project.due_date) : undefined,
       status: project?.status || "planning",
     },
@@ -88,23 +97,25 @@ export function CreateProjectForm({ project, trigger }: CreateProjectFormProps) 
       }
       formData.append("status", values.status);
 
-      const result = isEdit && project
-        ? await updateProject(project.id, formData)
-        : await createProject(formData);
+      const result =
+        isEdit && project
+          ? await updateProjectMutation(project.id, formData)
+          : await createProjectMutation(formData);
+
       if (result.success) {
-        toast.success(isEdit ? "Project updated successfully" : "Project created");
         setOpen(false);
         if (!isEdit) {
           form.reset();
         }
-      } else {
-        console.error(`Failed to ${isEdit ? 'update' : 'create'} project:`, result.error);
-        const msg = result.error || `Failed to ${isEdit ? 'update' : 'create'} project`;
-        toast.error(msg);
       }
     } catch (error) {
-      console.error(`Error ${isEdit ? 'updating' : 'creating'} project:`, error);
-      toast.error(`Unexpected error ${isEdit ? 'updating' : 'creating'} project`);
+      console.error(
+        `Error ${isEdit ? "updating" : "creating"} project:`,
+        error,
+      );
+      toast.error(
+        `Unexpected error ${isEdit ? "updating" : "creating"} project`,
+      );
     } finally {
       setIsLoading(false);
     }
@@ -119,15 +130,15 @@ export function CreateProjectForm({ project, trigger }: CreateProjectFormProps) 
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {trigger || defaultTrigger}
-      </SheetTrigger>
+      <SheetTrigger asChild>{trigger || defaultTrigger}</SheetTrigger>
       <SheetContent className="flex flex-col p-0 w-full sm:max-w-md">
         {/* Fixed Header */}
 
         {/* make the blur */}
         <SheetHeader>
-          <SheetTitle>{isEdit ? 'Edit Project' : 'Create New Project'}</SheetTitle>
+          <SheetTitle>
+            {isEdit ? "Edit Project" : "Create New Project"}
+          </SheetTitle>
         </SheetHeader>
 
         {/* Scrollable Form Content */}
@@ -164,8 +175,8 @@ export function CreateProjectForm({ project, trigger }: CreateProjectFormProps) 
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide a brief overview of the project&apos;s goals and scope.
-                      (Optional)
+                      Provide a brief overview of the project&apos;s goals and
+                      scope. (Optional)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -305,7 +316,13 @@ export function CreateProjectForm({ project, trigger }: CreateProjectFormProps) 
             disabled={isLoading}
             onClick={form.handleSubmit(onSubmit)}
           >
-            {isLoading ? (isEdit ? "Updating..." : "Creating...") : (isEdit ? "Update Project" : "Create Project")}
+            {isLoading
+              ? isEdit
+                ? "Updating..."
+                : "Creating..."
+              : isEdit
+                ? "Update Project"
+                : "Create Project"}
           </Button>
         </SheetFooter>
       </SheetContent>
