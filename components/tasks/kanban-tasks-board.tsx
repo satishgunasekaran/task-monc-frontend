@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, Filter, FilterX } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   KanbanBoard,
   KanbanCard,
@@ -14,6 +15,7 @@ import {
   type DragEndEvent,
 } from "@/components/ui/shadcn-io/kanban";
 import { updateTaskPositionAndStatus } from "@/app/(site)/projects/task-actions";
+import { formatLocalDateTime, isInPast, isDueSoon } from "@/lib/datetime-utils";
 import { toast } from "sonner";
 import { TaskWithProfiles } from "@/lib/types";
 
@@ -92,12 +94,12 @@ export function KanbanTasksBoard({
     if (!showDueTodayOnly) {
       return allTasks;
     }
-    return allTasks.filter((task) => isDateToday(task.due_date));
+    return allTasks.filter((task) => isDateToday(task.due_datetime));
   }, [allTasks, showDueTodayOnly]);
 
   // Count tasks due today
   const dueTodayCount = useMemo(() => {
-    return allTasks.filter((task) => isDateToday(task.due_date)).length;
+    return allTasks.filter((task) => isDateToday(task.due_datetime)).length;
   }, [allTasks]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -359,11 +361,25 @@ export function KanbanTasksBoard({
                           </span>
                         </div>
                       )}
-                      {task.due_date && (
+                      {task.due_datetime && (
                         <div className="flex items-center gap-1">
                           <CalendarDays className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(task.due_date).toLocaleDateString()}
+                          <span
+                            className={cn(
+                              "text-xs text-muted-foreground",
+                              isInPast(task.due_datetime) &&
+                                task.status !== "completed" &&
+                                "text-red-600 font-medium",
+                              isDueSoon(task.due_datetime) &&
+                                "text-orange-600 font-medium",
+                            )}
+                          >
+                            {formatLocalDateTime(task.due_datetime, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </span>
                         </div>
                       )}

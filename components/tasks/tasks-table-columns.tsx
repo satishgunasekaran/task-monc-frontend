@@ -9,6 +9,7 @@ import { TaskWithProfiles } from "@/lib/types";
 import { Calendar, Clock, Eye, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { formatLocalDateTime, isInPast, isDueSoon } from "@/lib/datetime-utils";
 import { TaskForm } from "./task-form";
 
 type ExtendedTaskWithProfiles = TaskWithProfiles & {
@@ -18,7 +19,7 @@ type ExtendedTaskWithProfiles = TaskWithProfiles & {
 const statusColors = {
   todo: "bg-gray-100 text-gray-800 border-gray-300",
   in_progress: "bg-blue-100 text-blue-800 border-blue-300",
-  review: "bg-yellow-100 text-yellow-800 border-yellow-300", 
+  review: "bg-yellow-100 text-yellow-800 border-yellow-300",
   completed: "bg-green-100 text-green-800 border-green-300",
   cancelled: "bg-red-100 text-red-800 border-red-300",
 };
@@ -32,13 +33,15 @@ const priorityColors = {
 
 const statusLabels = {
   todo: "To Do",
-  in_progress: "In Progress", 
+  in_progress: "In Progress",
   review: "Review",
   completed: "Completed",
   cancelled: "Cancelled",
 };
 
-export function getTasksTableColumns(onTaskClick?: (task: ExtendedTaskWithProfiles) => void): ColumnDef<ExtendedTaskWithProfiles>[] {
+export function getTasksTableColumns(
+  onTaskClick?: (task: ExtendedTaskWithProfiles) => void,
+): ColumnDef<ExtendedTaskWithProfiles>[] {
   return [
     {
       accessorKey: "title",
@@ -48,10 +51,11 @@ export function getTasksTableColumns(onTaskClick?: (task: ExtendedTaskWithProfil
       cell: ({ row }) => {
         const task = row.original;
         return (
-          <div 
+          <div
             className={cn(
               "flex flex-col gap-1 max-w-[300px]",
-              onTaskClick && "cursor-pointer hover:bg-accent/50 p-2 -m-2 rounded"
+              onTaskClick &&
+                "cursor-pointer hover:bg-accent/50 p-2 -m-2 rounded",
             )}
             onClick={() => onTaskClick?.(task)}
           >
@@ -137,29 +141,64 @@ export function getTasksTableColumns(onTaskClick?: (task: ExtendedTaskWithProfil
       },
     },
     {
-      accessorKey: "due_date",
+      accessorKey: "start_datetime",
+      header: ({ column }) => (
+        <TableColumnHeader column={column} title="Start Date" />
+      ),
+      cell: ({ row }) => {
+        const startDateTime = row.original.start_datetime;
+        if (!startDateTime) {
+          return <span className="text-muted-foreground text-sm">-</span>;
+        }
+
+        return (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-3 w-3" />
+            <span className="text-sm">
+              {formatLocalDateTime(startDateTime, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "due_datetime",
       header: ({ column }) => (
         <TableColumnHeader column={column} title="Due Date" />
       ),
       cell: ({ row }) => {
-        const dueDate = row.original.due_date;
-        if (!dueDate) {
+        const dueDateTime = row.original.due_datetime;
+        if (!dueDateTime) {
           return <span className="text-muted-foreground text-sm">-</span>;
         }
 
-        const date = new Date(dueDate);
-        const isOverdue = date < new Date() && row.original.status !== "completed";
-        
+        const isOverdue =
+          isInPast(dueDateTime) && row.original.status !== "completed";
+        const dueSoon = isDueSoon(dueDateTime);
+
         return (
           <div className="flex items-center gap-2">
             <Calendar className="h-3 w-3" />
             <span
               className={cn(
                 "text-sm",
-                isOverdue && "text-red-600 font-medium"
+                isOverdue && "text-red-600 font-medium",
+                !isOverdue && dueSoon && "text-orange-600 font-medium",
               )}
             >
-              {format(date, "MMM d, yyyy")}
+              {formatLocalDateTime(dueDateTime, {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
           </div>
         );
@@ -238,7 +277,7 @@ export function getTasksTableColumns(onTaskClick?: (task: ExtendedTaskWithProfil
         const task = row.original;
         return (
           <div className="flex items-center gap-2">
-            <TaskForm 
+            <TaskForm
               task={task}
               mode="view"
               trigger={
@@ -247,7 +286,7 @@ export function getTasksTableColumns(onTaskClick?: (task: ExtendedTaskWithProfil
                 </Button>
               }
             />
-            <TaskForm 
+            <TaskForm
               task={task}
               mode="edit"
               trigger={

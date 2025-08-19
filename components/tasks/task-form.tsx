@@ -11,7 +11,7 @@ import { Form } from "@/components/ui/form";
 import { TextField } from "@/components/ui/form-fields/TextField";
 import { TextareaField } from "@/components/ui/form-fields/TextareaField";
 import { SelectField } from "@/components/ui/form-fields/SelectField";
-import { DatePickerField } from "@/components/ui/form-fields/DatePickerField";
+import { DateTimePickerField } from "@/components/ui/form-fields/DateTimePickerField";
 import { TagsField } from "@/components/ui/form-fields/TagsField";
 import {
   Sheet,
@@ -21,25 +21,44 @@ import {
   SheetTrigger,
   SheetFooter,
 } from "@/components/ui/sheet";
+import { toUTC, fromUTC } from "@/lib/datetime-utils";
 import { createTask, updateTask } from "@/app/(site)/projects/task-actions";
 import { toast } from "sonner";
 import { Task } from "./types";
 // Removed unused sidebar imports
 
-const formSchema = z.object({
-  title: z.string().min(1, "Task title is required"),
-  description: z.string().optional(),
-  priority: z.enum(["low", "medium", "high", "urgent"]),
-  status: z.enum(["todo", "in_progress", "review", "completed", "cancelled"]),
-  due_date: z.date().optional(),
-  tags: z.string().optional(),
-});
+const formSchema = z
+  .object({
+    title: z.string().min(1, "Task title is required"),
+    description: z.string().optional(),
+    priority: z.enum(["low", "medium", "high", "urgent"]),
+    status: z.enum(["todo", "in_progress", "review", "completed", "cancelled"]),
+    start_datetime: z.date().optional(),
+    due_datetime: z.date().optional(),
+    tags: z.string().optional(),
+  })
+  .superRefine((vals, ctx) => {
+    const { start_datetime, due_datetime } = vals as {
+      start_datetime?: Date;
+      due_datetime?: Date;
+    };
+
+    if (start_datetime && due_datetime) {
+      if (due_datetime <= start_datetime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["due_datetime"],
+          message: "Due date/time must be after start date/time",
+        });
+      }
+    }
+  });
 
 interface TaskFormProps {
   projectId?: string;
   task?: Task;
   trigger?: React.ReactNode;
-  mode?: 'create' | 'edit' | 'view';
+  mode?: "create" | "edit" | "view";
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onTaskCreated?: (task: Task) => void;
@@ -56,7 +75,7 @@ export function TaskForm({
   projectId,
   task,
   trigger,
-  mode = task ? 'edit' : 'create',
+  mode = task ? "edit" : "create",
   open: controlledOpen,
   onOpenChange,
   onTaskCreated,
@@ -65,11 +84,11 @@ export function TaskForm({
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
-  
-  const [isEditing, setIsEditing] = useState(mode !== 'view');
+
+  const [isEditing, setIsEditing] = useState(mode !== "view");
   const [isLoading, setIsLoading] = useState(false);
-  const isView = mode === 'view';
-  const isEdit = mode === 'edit' || (mode !== 'create' && !!task);
+  const isView = mode === "view";
+  const isEdit = mode === "edit" || (mode !== "create" && !!task);
   const readOnly = isView && !isEditing;
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -79,14 +98,25 @@ export function TaskForm({
       description: task?.description || "",
       priority: task?.priority || "medium",
       status: task?.status || "todo",
-      due_date: task?.due_date ? new Date(task.due_date) : undefined,
+      start_datetime: task?.start_datetime
+        ? fromUTC(task.start_datetime)
+        : undefined,
+      due_datetime: task?.due_datetime ? fromUTC(task.due_datetime) : undefined,
       tags: task?.tags?.join(", ") || "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (readOnly) return;
-    
+
+    // Defensive runtime check in case schema validation didn't run or was bypassed
+    if (values.start_datetime && values.due_datetime) {
+      if (values.due_datetime <= values.start_datetime) {
+        toast.error("Due date/time must be after start date/time");
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const formData = new FormData();
@@ -94,8 +124,11 @@ export function TaskForm({
       formData.append("description", values.description || "");
       formData.append("priority", values.priority);
       formData.append("status", values.status);
-      if (values.due_date) {
-        formData.append("due_date", values.due_date.toISOString());
+      if (values.start_datetime) {
+        formData.append("start_datetime", toUTC(values.start_datetime));
+      }
+      if (values.due_datetime) {
+        formData.append("due_datetime", toUTC(values.due_datetime));
       }
       formData.append("tags", values.tags || "");
       if (projectId) {
@@ -109,19 +142,19 @@ export function TaskForm({
       if (result.success) {
         const updatedTask = result.task;
         toast.success(isEdit ? "Task updated successfully" : "Task created");
-        
+
         // Call appropriate callback to update parent state
         if (isEdit && onTaskUpdated && updatedTask) {
           onTaskUpdated(updatedTask);
         } else if (!isEdit && onTaskCreated && updatedTask) {
           onTaskCreated(updatedTask);
         }
-        
+
         setOpen(false);
         if (!isEdit) {
           form.reset();
         }
-        
+
         // If in view mode and was editing, switch back to view mode
         if (isView && isEditing) {
           setIsEditing(false);
@@ -148,14 +181,14 @@ export function TaskForm({
   };
 
   const getTitle = () => {
-    if (mode === 'view') return task?.title || 'Task Details';
-    return isEdit ? 'Edit Task' : 'Create New Task';
+    if (mode === "view") return task?.title || "Task Details";
+    return isEdit ? "Edit Task" : "Create New Task";
   };
 
   const getButtonText = () => {
-    if (isView && !isEditing) return 'Edit';
-    if (isLoading) return isEdit ? 'Updating...' : 'Creating...';
-    return isEdit ? 'Update Task' : 'Create Task';
+    if (isView && !isEditing) return "Edit";
+    if (isLoading) return isEdit ? "Updating..." : "Creating...";
+    return isEdit ? "Update Task" : "Create Task";
   };
 
   const defaultTrigger = (
@@ -253,11 +286,19 @@ export function TaskForm({
                 />
               </div>
 
-              <DatePickerField
+              <DateTimePickerField
                 form={form}
-                name="due_date"
-                label="Due Date"
-                placeholder="Pick a date"
+                name="start_datetime"
+                label="Start Date & Time"
+                placeholder="Pick start date and time"
+                readOnly={readOnly}
+              />
+
+              <DateTimePickerField
+                form={form}
+                name="due_datetime"
+                label="Due Date & Time"
+                placeholder="Pick due date and time"
                 readOnly={readOnly}
               />
 

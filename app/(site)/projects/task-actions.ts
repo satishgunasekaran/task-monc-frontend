@@ -27,7 +27,8 @@ export async function createTask(formData: FormData) {
     const description = formData.get('description') as string
     const priority = formData.get('priority') as string
     const status = formData.get('status') as string
-    const due_date = formData.get('due_date') as string
+    const start_datetime = formData.get('start_datetime') as string
+    const due_datetime = formData.get('due_datetime') as string
     const tags = formData.get('tags') as string
 
     if (!project_id || !title) {
@@ -62,7 +63,8 @@ export async function createTask(formData: FormData) {
         description: description || null,
         priority: priority as TaskInsert['priority'] || 'medium',
         status: status as TaskInsert['status'] || 'todo',
-        due_date: due_date || null,
+        start_datetime: start_datetime || null,
+        due_datetime: due_datetime || null,
         tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : null,
         project_id,
         organization_id: activeOrgId,
@@ -107,7 +109,8 @@ export async function updateTask(taskId: string, formData: FormData) {
     const description = formData.get('description') as string
     const priority = formData.get('priority') as string
     const status = formData.get('status') as string
-    const due_date = formData.get('due_date') as string
+    const start_datetime = formData.get('start_datetime') as string
+    const due_datetime = formData.get('due_datetime') as string
     const tags = formData.get('tags') as string
     const assigned_to = formData.get('assigned_to') as string
 
@@ -120,7 +123,8 @@ export async function updateTask(taskId: string, formData: FormData) {
         description: description || null,
         priority: priority as TaskUpdate['priority'] || 'medium',
         status: status as TaskUpdate['status'] || 'todo',
-        due_date: due_date || null,
+        start_datetime: start_datetime || null,
+        due_datetime: due_datetime || null,
         tags: tags ? tags.split(',').map(tag => tag.trim()).filter(Boolean) : null,
         assigned_to: assigned_to || null,
     }

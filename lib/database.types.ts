@@ -216,7 +216,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
-          due_date: string | null
+          due_datetime: string | null
           estimated_hours: number | null
           id: string
           organization_id: string
@@ -224,7 +224,7 @@ export type Database = {
           position: number | null
           priority: Database["public"]["Enums"]["task_priority"]
           project_id: string | null
-          start_date: string | null
+          start_datetime: string | null
           status: Database["public"]["Enums"]["task_status"]
           tags: string[] | null
           title: string
@@ -237,7 +237,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
-          due_date?: string | null
+          due_datetime?: string | null
           estimated_hours?: number | null
           id?: string
           organization_id: string
@@ -245,7 +245,7 @@ export type Database = {
           position?: number | null
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
-          start_date?: string | null
+          start_datetime?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
           title: string
@@ -258,7 +258,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
-          due_date?: string | null
+          due_datetime?: string | null
           estimated_hours?: number | null
           id?: string
           organization_id?: string
@@ -266,7 +266,7 @@ export type Database = {
           position?: number | null
           priority?: Database["public"]["Enums"]["task_priority"]
           project_id?: string | null
-          start_date?: string | null
+          start_datetime?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           tags?: string[] | null
           title?: string

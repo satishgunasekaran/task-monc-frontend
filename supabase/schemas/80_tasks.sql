@@ -15,8 +15,8 @@ create table if not exists public.tasks (
   description text,
   status public.task_status not null default 'todo',
   priority public.task_priority not null default 'medium',
-  start_date date,
-  due_date date,
+  start_datetime timestamp with time zone,
+  due_datetime timestamp with time zone,
   completed_at timestamp with time zone,
   estimated_hours integer, -- estimated time in hours
   actual_hours integer, -- actual time spent in hours
@@ -41,7 +41,7 @@ create index if not exists idx_tasks_status on public.tasks(status);
 create index if not exists idx_tasks_priority on public.tasks(priority);
 create index if not exists idx_tasks_created_by on public.tasks(created_by);
 create index if not exists idx_tasks_assigned_to on public.tasks(assigned_to);
-create index if not exists idx_tasks_due_date on public.tasks(due_date);
+create index if not exists idx_tasks_due_datetime on public.tasks(due_datetime);
 create index if not exists idx_tasks_position on public.tasks(project_id, position);
 create index if not exists idx_tasks_tags on public.tasks using gin(tags);
 
