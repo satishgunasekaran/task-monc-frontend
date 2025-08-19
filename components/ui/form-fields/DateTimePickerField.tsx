@@ -95,7 +95,7 @@ export function DateTimePickerField<T extends FieldValues>({
                       disabled={readOnly}
                       className={`flex-1 justify-start text-left font-normal ${!selectedDate ? "text-muted-foreground" : ""}`}
                     >
-                      {selectedDate ? dateString : <span>Pick a date</span>}
+                      {selectedDate ? dateString : <span>{placeholder}</span>}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>

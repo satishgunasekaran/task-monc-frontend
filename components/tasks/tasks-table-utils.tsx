@@ -21,7 +21,7 @@ export function applyDateFilter(
   if (dateFilter === "all") return tasks;
 
   return tasks.filter((task) => {
-    const dueDate = task.due_date ? new Date(task.due_date) : null;
+    const dueDate = task.due_datetime ? new Date(task.due_datetime) : null;
 
     switch (dateFilter) {
       case "today":
