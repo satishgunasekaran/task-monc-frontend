@@ -47,7 +47,7 @@ export function SettingsDangerZone() {
         .eq("organization_id", activeOrgId)
         .eq("user_id", uid)
         .single();
-  setRole((mem?.role as unknown as "owner" | "admin" | "member") ?? null);
+      setRole((mem?.role as unknown as "owner" | "admin" | "member") ?? null);
     })();
     return () => {
       cancelled = true;

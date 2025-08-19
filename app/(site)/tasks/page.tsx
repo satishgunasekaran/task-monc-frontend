@@ -118,7 +118,8 @@ export default async function TasksPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold mb-2">Tasks</h1>
             <p className="text-muted-foreground text-sm md:text-base">
-              Manage and track all tasks across your organization&apos;s projects.
+              Manage and track all tasks across your organization&apos;s
+              projects.
             </p>
           </div>
           {/* Show a compact/new primary button in the header for quick access */}
