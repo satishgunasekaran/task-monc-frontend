@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { ColumnDef } from "@/components/ui/shadcn-io/table";
 import { TableColumnHeader } from "@/components/ui/shadcn-io/table";
 import { TaskWithProfiles } from "@/lib/types";
@@ -43,6 +44,28 @@ export function getTasksTableColumns(
   onTaskClick?: (task: ExtendedTaskWithProfiles) => void,
 ): ColumnDef<ExtendedTaskWithProfiles>[] {
   return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "title",
       header: ({ column }) => (
