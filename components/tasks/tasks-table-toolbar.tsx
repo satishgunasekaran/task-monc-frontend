@@ -1,18 +1,21 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useTableSelection } from "@/components/ui/shadcn-io/table";
 import { TaskWithProfiles } from "@/lib/types";
 import { Trash2, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { Table } from "@tanstack/react-table";
 
 interface TasksTableToolbarProps {
+  table: Table<TaskWithProfiles>;
   onBulkDelete?: (tasks: TaskWithProfiles[]) => Promise<void>;
   onBulkStatusUpdate?: (tasks: TaskWithProfiles[], status: string) => Promise<void>;
 }
 
-export function TasksTableToolbar({ onBulkDelete, onBulkStatusUpdate }: TasksTableToolbarProps) {
-  const { selectedRows, selectedCount, resetSelection } = useTableSelection<TaskWithProfiles>();
+export function TasksTableToolbar({ table, onBulkDelete, onBulkStatusUpdate }: TasksTableToolbarProps) {
+  const selectedRows = table.getSelectedRowModel().rows;
+  const selectedCount = selectedRows.length;
+  const resetSelection = () => table.resetRowSelection();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleBulkDelete = async () => {

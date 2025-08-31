@@ -2,15 +2,25 @@
 
 import { useMemo, useState, useEffect } from "react";
 import {
+  ColumnFiltersState,
+  RowSelectionState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableHeaderGroup,
-  TableProvider,
   TableRow,
-} from "@/components/ui/shadcn-io/table";
+} from "@/components/ui/table";
 import { TaskWithProfiles } from "@/lib/types";
 import { TasksTableFilters, DateFilter } from "./tasks-table-filters";
 import { getTasksTableColumns } from "./tasks-table-columns";
@@ -45,11 +55,15 @@ export function TasksTable({
   const [projectFilter, setProjectFilter] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
 
-  // Pagination state
+  // Table state
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
-  // Apply all filters
+  // Apply all filters to get filtered data
   const filteredTasks = useMemo(() => {
     return applyAllFilters(tasks, {
       globalFilter,
@@ -79,6 +93,26 @@ export function TasksTable({
 
   // Generate columns
   const columns = useMemo(() => getTasksTableColumns(), []);
+
+  // TanStack Table setup
+  const table = useReactTable({
+    data: paginatedTasks,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
 
   const uniqueStatuses = Array.from(new Set(tasks.map((task) => task.status)));
   const uniquePriorities = Array.from(
@@ -127,37 +161,60 @@ export function TasksTable({
       {/* Table - Scrollable content */}
       <ScrollableContainer>
         <div className="border rounded-lg">
-          <TableProvider columns={columns} data={paginatedTasks}>
-            <TasksTableToolbar
-              onBulkDelete={onBulkDelete}
-              onBulkStatusUpdate={onBulkStatusUpdate}
-            />
-            <Table>
-              <TableHeader>
-                {({ headerGroup }) => (
-                  <TableHeaderGroup
-                    headerGroup={headerGroup}
-                    key={headerGroup.id}
-                  >
-                    {({ header }) => (
-                      <TableHead header={header} key={header.id} />
-                    )}
-                  </TableHeaderGroup>
-                )}
-              </TableHeader>
-              <TableBody>
-                {({ row }) => (
+          <TasksTableToolbar
+            table={table}
+            onBulkDelete={onBulkDelete}
+            onBulkStatusUpdate={onBulkStatusUpdate}
+          />
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    row={row}
+                    data-state={row.getIsSelected() && "selected"}
                     className="cursor-pointer hover:bg-muted/50"
                   >
-                    {({ cell }) => <TableCell cell={cell} key={cell.id} />}
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableProvider>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </ScrollableContainer>
 

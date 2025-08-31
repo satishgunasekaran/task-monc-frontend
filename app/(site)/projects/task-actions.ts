@@ -338,3 +338,75 @@ export async function deleteTask(taskId: string) {
     revalidatePath(`/projects/${task.project_id}`)
     return { success: true }
 }
+
+export async function bulkDeleteTasks(taskIds: string[]) {
+    const supabase = await createClient()
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'User not authenticated' }
+    }
+
+    const activeOrgId = await getActiveOrgIdServer()
+
+    if (!activeOrgId) {
+        return { error: 'No active organization selected' }
+    }
+
+    if (!taskIds.length) {
+        return { error: 'No tasks provided for deletion' }
+    }
+
+    // Verify all tasks belong to projects in the active organization
+    const { data: tasks, error: tasksError } = await supabase
+        .from('tasks')
+        .select(`
+      id,
+      project_id,
+      projects!inner (
+        organization_id
+      )
+    `)
+        .in('id', taskIds)
+
+    if (tasksError) {
+        return { error: 'Failed to verify task permissions' }
+    }
+
+    // Check that all tasks belong to the active organization
+    const unauthorizedTasks = tasks?.filter(task => {
+        const projectOrgId = Array.isArray(task?.projects)
+            ? task.projects[0]?.organization_id
+            : task?.projects ? (task.projects as { organization_id: string }).organization_id : undefined;
+        return projectOrgId !== activeOrgId;
+    }) || []
+
+    if (unauthorizedTasks.length > 0) {
+        return { error: 'Some tasks do not belong to your organization' }
+    }
+
+    // Delete the tasks
+    const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .in('id', taskIds)
+
+    if (error) {
+        console.error('Bulk task deletion error:', error)
+        return { error: 'Failed to delete some tasks' }
+    }
+
+    // Get unique project IDs for revalidation
+    const projectIds = [...new Set(tasks?.map(task => task.project_id).filter(Boolean) || [])]
+
+    revalidatePath('/tasks')
+    // Revalidate all affected project pages
+    projectIds.forEach(projectId => {
+        revalidatePath(`/projects/${projectId}`)
+    })
+
+    return { success: true, deletedCount: taskIds.length }
+}

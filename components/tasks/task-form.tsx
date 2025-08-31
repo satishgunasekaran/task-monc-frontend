@@ -22,9 +22,9 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toUTC, fromUTC } from "@/lib/datetime-utils";
-import { createTask, updateTask } from "@/app/(site)/projects/task-actions";
 import { toast } from "sonner";
 import { Task } from "./types";
+import { useTaskMutations } from "@/hooks/use-tasks";
 // Removed unused sidebar imports
 
 const formSchema = z
@@ -86,10 +86,13 @@ export function TaskForm({
   const setOpen = onOpenChange ?? setInternalOpen;
 
   const [isEditing, setIsEditing] = useState(mode !== "view");
-  const [isLoading, setIsLoading] = useState(false);
   const isView = mode === "view";
   const isEdit = mode === "edit" || (mode !== "create" && !!task);
   const readOnly = isView && !isEditing;
+  
+  // Use TanStack Query mutations
+  const { createTask, updateTask, isCreating, isUpdating } = useTaskMutations();
+  const isLoading = isCreating || isUpdating;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -117,7 +120,6 @@ export function TaskForm({
       }
     }
 
-    setIsLoading(true);
     try {
       const formData = new FormData();
       formData.append("title", values.title);
@@ -135,44 +137,32 @@ export function TaskForm({
         formData.append("project_id", projectId);
       }
 
-      const result =
-        isEdit && task
-          ? await updateTask(task.id, formData)
-          : await createTask(formData);
-      if (result.success) {
-        const updatedTask = result.task;
-        toast.success(isEdit ? "Task updated successfully" : "Task created");
+      const result = isEdit && task
+        ? await updateTask({ taskId: task.id, formData })
+        : await createTask(formData);
 
-        // Call appropriate callback to update parent state
-        if (isEdit && onTaskUpdated && updatedTask) {
-          onTaskUpdated(updatedTask);
-        } else if (!isEdit && onTaskCreated && updatedTask) {
-          onTaskCreated(updatedTask);
-        }
+      // Success is handled by the mutation's onSuccess callback
+      const updatedTask = result.task;
 
-        setOpen(false);
-        if (!isEdit) {
-          form.reset();
-        }
+      // Call appropriate callback to update parent state
+      if (isEdit && onTaskUpdated && updatedTask) {
+        onTaskUpdated(updatedTask);
+      } else if (!isEdit && onTaskCreated && updatedTask) {
+        onTaskCreated(updatedTask);
+      }
 
-        // If in view mode and was editing, switch back to view mode
-        if (isView && isEditing) {
-          setIsEditing(false);
-        }
-      } else {
-        console.error(
-          `Failed to ${isEdit ? "update" : "create"} task:`,
-          result.error,
-        );
-        const msg =
-          result.error || `Failed to ${isEdit ? "update" : "create"} task`;
-        toast.error(msg);
+      setOpen(false);
+      if (!isEdit) {
+        form.reset();
+      }
+
+      // If in view mode and was editing, switch back to view mode
+      if (isView && isEditing) {
+        setIsEditing(false);
       }
     } catch (error) {
+      // Error handling is already done by the mutation's onError callback
       console.error(`Error ${isEdit ? "updating" : "creating"} task:`, error);
-      toast.error(`Unexpected error ${isEdit ? "updating" : "creating"} task`);
-    } finally {
-      setIsLoading(false);
     }
   }
 

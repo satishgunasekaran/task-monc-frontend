@@ -4,10 +4,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { ColumnDef } from "@/components/ui/shadcn-io/table";
-import { TableColumnHeader } from "@/components/ui/shadcn-io/table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { TaskWithProfiles } from "@/lib/types";
-import { Calendar, Clock, Eye, Edit } from "lucide-react";
+import { ArrowUpDown, Calendar, Clock, Eye, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { formatLocalDateTime, isInPast, isDueSoon } from "@/lib/datetime-utils";
@@ -69,7 +68,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "title",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Task" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Task
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const task = row.original;
@@ -102,7 +107,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "status",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Status" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Status
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const status = row.original.status;
@@ -119,7 +130,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "priority",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Priority" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Priority
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const priority = row.original.priority;
@@ -136,7 +153,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "assigned_to_profile",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Assignee" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Assignee
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const profile = row.original.assigned_to_profile;
@@ -166,7 +189,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "start_datetime",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Start Date" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Start Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const startDateTime = row.original.start_datetime;
@@ -193,7 +222,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "due_datetime",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Due Date" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Due Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const dueDateTime = row.original.due_datetime;
@@ -259,7 +294,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "estimated_hours",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Hours" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Hours
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const estimated = row.original.estimated_hours;
@@ -282,7 +323,13 @@ export function getTasksTableColumns(
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <TableColumnHeader column={column} title="Created" />
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Created
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
       ),
       cell: ({ row }) => {
         const date = new Date(row.original.created_at);

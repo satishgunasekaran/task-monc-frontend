@@ -14,13 +14,13 @@ import {
   KanbanProvider,
   type DragEndEvent,
 } from "@/components/ui/shadcn-io/kanban";
-import { updateTaskPositionAndStatus } from "@/app/(site)/projects/task-actions";
 import { formatLocalDateTime, isInPast, isDueSoon } from "@/lib/datetime-utils";
 import { toast } from "sonner";
 import { TaskWithProfiles } from "@/lib/types";
+import { useTasks, useTaskMutations } from "@/hooks/use-tasks";
+import { useActiveOrg } from "@/components/providers/app-provider";
 
 interface KanbanTasksBoardProps {
-  initialTasks: TaskWithProfiles[];
   projectId?: string;
 }
 
@@ -68,21 +68,18 @@ const isDateToday = (dateString: string | null): boolean => {
 };
 
 export function KanbanTasksBoard({
-  initialTasks,
   projectId,
 }: KanbanTasksBoardProps) {
-  const [allTasks, setAllTasks] = useState<KanbanTask[]>(() =>
-    transformTasksForKanban(initialTasks),
-  );
-  const [updatingTaskIds, setUpdatingTaskIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const { activeOrgId } = useActiveOrg();
+  const { data: initialTasks = [], isLoading } = useTasks(activeOrgId, projectId);
+  const { updateTask } = useTaskMutations();
+  
+  const [updatingTaskIds, setUpdatingTaskIds] = useState<Set<string>>(new Set());
   const [isMounted, setIsMounted] = useState(false);
   const [showDueTodayOnly, setShowDueTodayOnly] = useState(false);
-  // Update tasks when initialTasks changes
-  useEffect(() => {
-    setAllTasks(transformTasksForKanban(initialTasks));
-  }, [initialTasks]);
+  
+  // All hooks must be called before any conditional returns
+  const allTasks = useMemo(() => transformTasksForKanban(initialTasks), [initialTasks]);
 
   // Handle hydration
   useEffect(() => {
@@ -101,6 +98,17 @@ export function KanbanTasksBoard({
   const dueTodayCount = useMemo(() => {
     return allTasks.filter((task) => isDateToday(task.due_datetime)).length;
   }, [allTasks]);
+
+  // Loading state - moved after all hooks
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading tasks...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     console.log("=== DRAG END CALLED ===", event);
@@ -134,9 +142,6 @@ export function KanbanTasksBoard({
 
     console.log("Active task found:", activeTask.title);
     console.log("Over target:", over.id);
-
-    // Store original state for potential revert
-    const originalTasks = [...tasks];
 
     // Determine target status and position
     let targetStatus = activeTask.status;
@@ -189,42 +194,39 @@ export function KanbanTasksBoard({
       return;
     }
 
-    console.log("Task moved, updating database...");
+    console.log("Task moved, updating using TanStack Query mutation...");
     setUpdatingTaskIds((prev) => new Set(prev).add(activeTask.id));
 
     try {
-      console.log("Calling server action with:", {
-        taskId: activeTask.id,
-        targetStatus,
-        targetPosition,
-        projectId,
-      });
-
-      const result = await updateTaskPositionAndStatus(
-        activeTask.id,
-        targetStatus,
-        targetPosition,
-        projectId,
-      );
-
-      console.log("Server action result:", result);
-
-      if (!result.success) {
-        console.error("Failed to update task:", result.error);
-        toast.error(result.error || "Failed to update task");
-        // Revert local changes
-        setAllTasks(originalTasks);
-      } else {
-        console.log("Task updated successfully");
-        toast.success(
-          `Task "${activeTask.title}" moved to ${statusColumns.find((c) => c.id === targetStatus)?.name}`,
-        );
+      // Use the existing updateTask mutation with FormData
+      const formData = new FormData();
+      formData.append("title", activeTask.title);
+      formData.append("description", activeTask.description || "");
+      formData.append("priority", activeTask.priority);
+      formData.append("status", targetStatus);
+      formData.append("position", targetPosition.toString());
+      if (activeTask.start_datetime) {
+        formData.append("start_datetime", activeTask.start_datetime);
       }
+      if (activeTask.due_datetime) {
+        formData.append("due_datetime", activeTask.due_datetime);
+      }
+      if (activeTask.tags && activeTask.tags.length > 0) {
+        formData.append("tags", activeTask.tags.join(", "));
+      }
+      if (activeTask.assigned_to) {
+        formData.append("assigned_to", activeTask.assigned_to);
+      }
+
+      await updateTask({ taskId: activeTask.id, formData });
+
+      console.log("Task updated successfully via TanStack Query");
+      toast.success(
+        `Task "${activeTask.title}" moved to ${statusColumns.find((c) => c.id === targetStatus)?.name}`,
+      );
     } catch (error) {
       console.error("Error updating task:", error);
       toast.error("Failed to update task");
-      // Revert local changes
-      setAllTasks(originalTasks);
     } finally {
       setUpdatingTaskIds((prev) => {
         const newSet = new Set(prev);

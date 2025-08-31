@@ -1,144 +1,107 @@
-import { redirect, notFound } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
-import { getActiveOrgIdServer } from "@/utils/active-org/server";
+"use client";
+
+import { useParams, notFound } from "next/navigation";
+import { useActiveOrg } from "@/components/providers/app-provider";
 import { ProjectHeader } from "@/components/projects/project-header";
 import { ProjectTasksView } from "@/components/projects/project-tasks-view";
 import PageContainer from "@/components/layout/page-container";
-import { ProjectWithCreator, TaskWithProfiles } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
+import { createClient as createSupabaseBrowserClient } from "@/utils/supabase/client";
+import { ProjectWithCreator } from "@/lib/types";
 
-export default async function ProjectDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const supabase = await createClient();
+export default function ProjectDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const { activeOrgId } = useActiveOrg();
+  const supabase = createSupabaseBrowserClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Fetch project details with TanStack Query
+  const { data: project, isLoading: projectLoading, error: projectError } = useQuery({
+    queryKey: ["project", id, activeOrgId],
+    queryFn: async (): Promise<ProjectWithCreator> => {
+      if (!activeOrgId) throw new Error("No active organization");
 
-  if (!user) {
-    return redirect("/login");
-  }
+      // Fetch project details
+      const { data: projectData, error: projectError } = await supabase
+        .from("projects")
+        .select(
+          `
+          id,
+          name,
+          description,
+          status,
+          priority,
+          start_date,
+          due_date,
+          created_at,
+          updated_at,
+          completed_at,
+          created_by,
+          assigned_to,
+          color,
+          organization_id
+        `,
+        )
+        .eq("id", id)
+        .eq("organization_id", activeOrgId)
+        .single();
 
-  const activeOrgId = await getActiveOrgIdServer();
+      if (projectError || !projectData) {
+        throw new Error("Project not found");
+      }
 
-  if (!activeOrgId) {
-    return redirect("/projects");
-  }
+      // Fetch user profile for project creator
+      let project: ProjectWithCreator = { ...projectData, user_profiles: null };
+      if (projectData.created_by) {
+        const { data: userProfile } = await supabase
+          .from("user_profiles")
+          .select("id, first_name, last_name")
+          .eq("id", projectData.created_by)
+          .single();
 
-  // Fetch project details
-  const { data: projectData, error: projectError } = await supabase
-    .from("projects")
-    .select(
-      `
-      id,
-      name,
-      description,
-      status,
-      priority,
-      start_date,
-      due_date,
-      created_at,
-      updated_at,
-      completed_at,
-      created_by,
-      assigned_to,
-      color,
-      organization_id
-    `,
-    )
-    .eq("id", id)
-    .eq("organization_id", activeOrgId)
-    .single();
+        project = {
+          ...projectData,
+          user_profiles: userProfile || null,
+        };
+      }
 
-  if (projectError || !projectData) {
+      return project;
+    },
+    enabled: !!activeOrgId && !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  if (projectError) {
     return notFound();
   }
 
-  // Fetch user profile for project creator
-  let project: ProjectWithCreator = { ...projectData, user_profiles: null };
-  if (projectData.created_by) {
-    const { data: userProfile } = await supabase
-      .from("user_profiles")
-      .select("id, first_name, last_name")
-      .eq("id", projectData.created_by)
-      .single();
-
-    project = {
-      ...projectData,
-      user_profiles: userProfile || null,
-    };
+  if (projectLoading) {
+    return (
+      <PageContainer>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading project...</p>
+          </div>
+        </div>
+      </PageContainer>
+    );
   }
 
-  // Fetch tasks for this project
-  const { data: tasksData, error: tasksError } = await supabase
-    .from("tasks")
-    .select(
-      `
-      id,
-      title,
-      description,
-      status,
-      priority,
-      due_datetime,
-      start_datetime,
-      position,
-      tags,
-      created_at,
-      updated_at,
-      completed_at,
-      created_by,
-      assigned_to,
-      project_id,
-      organization_id,
-      parent_task_id,
-      actual_hours,
-      estimated_hours
-    `,
-    )
-    .eq("project_id", id)
-    .order("position", { ascending: true });
-
-  if (tasksError) {
-    console.error("Error fetching tasks:", tasksError);
+  if (!activeOrgId) {
+    return (
+      <PageContainer>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">No Organization Selected</h1>
+          <p className="text-muted-foreground">
+            Please select an organization to view this project.
+          </p>
+        </div>
+      </PageContainer>
+    );
   }
 
-  // Fetch user profiles for task creators and assignees
-  let tasks: TaskWithProfiles[] = [];
-  if (tasksData && tasksData.length > 0) {
-    const userIds = [
-      ...new Set(
-        [
-          ...tasksData.map((t) => t.created_by),
-          ...tasksData.map((t) => t.assigned_to),
-        ].filter((id): id is string => Boolean(id)),
-      ),
-    ];
-
-    let userProfiles: Array<{
-      id: string;
-      first_name: string | null;
-      last_name: string | null;
-    }> = [];
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("user_profiles")
-        .select("id, first_name, last_name")
-        .in("id", userIds);
-      userProfiles = profiles || [];
-    }
-
-    // Map user profiles to tasks
-    tasks = tasksData.map((task) => ({
-      ...task,
-      tags: task.tags || [],
-      created_by_profile:
-        userProfiles.find((profile) => profile.id === task.created_by) || null,
-      assigned_to_profile:
-        userProfiles.find((profile) => profile.id === task.assigned_to) || null,
-    }));
+  if (!project) {
+    return notFound();
   }
 
   return (
@@ -146,7 +109,6 @@ export default async function ProjectDetailPage({
       <div className="flex flex-1 flex-col space-y-4 w-full">
         <ProjectHeader project={project} />
         <ProjectTasksView
-          tasks={tasks || []}
           projectId={id}
           projectName={project.name}
           defaultView="kanban"

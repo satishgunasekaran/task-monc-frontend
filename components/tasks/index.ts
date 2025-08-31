@@ -8,7 +8,6 @@ export type { TaskFormMode } from './task-sidebar-provider';
 
 // Modular components for reuse
 export { TasksTableFilters } from './tasks-table-filters';
-export { getTasksTableColumns } from './tasks-table-columns';
 
 // Utility functions
 export * from './tasks-table-utils';
