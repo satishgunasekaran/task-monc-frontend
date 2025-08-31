@@ -1,8 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, User, Edit } from "lucide-react";
+import { CalendarDays, User, Edit, Trash2 } from "lucide-react";
 import { CreateProjectForm } from "./create-project-form";
 import { Project } from "./types";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useProjectMutations } from "@/hooks/use-project-mutations";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 
 interface ProjectHeaderProps {
@@ -18,6 +22,22 @@ const statusColors = {
 };
 
 export function ProjectHeader({ project }: ProjectHeaderProps) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { deleteProject } = useProjectMutations();
+  const router = useRouter();
+
+  const handleDeleteProject = async () => {
+    try {
+      const result = await deleteProject(project.id);
+      if (result.success) {
+        router.push("/projects");
+      }
+    } catch (error) {
+      // Error is already handled by the mutation hook with toast
+      console.error("Failed to delete project:", error);
+    }
+  };
+
   return (
     <div className="border-b bg-background p-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -27,15 +47,26 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
             <Badge variant="secondary" className={statusColors[project.status]}>
               {project.status.replace("_", " ")}
             </Badge>
-            <CreateProjectForm
-              project={project}
-              trigger={
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <Edit className="h-4 w-4" />
-                  <span className="sr-only">Edit project</span>
-                </Button>
-              }
-            />
+            <div className="flex items-center gap-1">
+              <CreateProjectForm
+                project={project}
+                trigger={
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Edit project</span>
+                  </Button>
+                }
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete project</span>
+              </Button>
+            </div>
           </div>
           {project.description && (
             <p className="text-muted-foreground max-w-2xl">
@@ -44,13 +75,17 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           )}
         </div>
         <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-          {project.user_profiles && (
+          {project.created_by && (
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span>
-                Created by {project.user_profiles.first_name}{" "}
-                {project.user_profiles.last_name}
+                Created by {project.created_by}
               </span>
+            </div>
+          )}
+          {typeof project.task_count === 'number' && (
+            <div className="text-xs">
+              Tasks: {project.task_count}
             </div>
           )}
           {project.start_date && (
@@ -69,6 +104,17 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           )}
         </div>
       </div>
+
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Project"
+        description={`Are you sure you want to delete "${project.name}"? This action cannot be undone and will also delete all tasks associated with this project.`}
+        confirmText="Delete Project"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDeleteProject}
+      />
     </div>
   );
 }

@@ -1,17 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient as createSupabaseBrowserClient } from "@/utils/supabase/client";
 import { getActiveOrgIdFromCookie } from "@/utils/active-org/client";
+import { useProjects as useProjectsWithTaskCount } from "./use-projects";
 
 export type Organization = {
     id: string;
     name: string;
     slug: string | null;
-};
-
-export type Project = {
-    id: string;
-    name: string;
-    status: string;
 };
 
 export function useOrganizations() {
@@ -60,29 +55,6 @@ export function useOrganizations() {
     });
 }
 
-export function useProjects(organizationId: string | null) {
-    const supabase = createSupabaseBrowserClient();
-
-    return useQuery({
-        queryKey: ["projects", organizationId],
-        queryFn: async (): Promise<Project[]> => {
-            if (!organizationId) return [];
-
-            const { data, error } = await supabase
-                .from("projects")
-                .select("id, name, status")
-                .eq("organization_id", organizationId)
-                .order("created_at", { ascending: false });
-
-            if (error) throw error;
-            return data || [];
-        },
-        enabled: !!organizationId, // Only run query if organizationId is provided
-        staleTime: 2 * 60 * 1000, // 2 minutes
-        gcTime: 5 * 60 * 1000, // 5 minutes
-    });
-}
-
 export function useActiveOrganization() {
     const { data: organizations = [], isLoading } = useOrganizations();
     const activeOrgId = getActiveOrgIdFromCookie();
@@ -95,3 +67,6 @@ export function useActiveOrganization() {
         organizations,
     };
 }
+
+// Re-export the projects hook from use-projects for consistency
+export const useProjects = useProjectsWithTaskCount;
