@@ -46,6 +46,8 @@ import {
 import { logout } from "@/app/login/actions";
 import { useOrganizations, useProjects } from "@/hooks/use-sidebar-data";
 import { useActiveOrg } from "@/components/providers/app-provider";
+import { SidebarOrgLoadingSkeleton } from "@/components/ui/loading-skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Menu items.
 const items = [
@@ -60,7 +62,7 @@ export function AppSidebar() {
   // Use our custom hooks for data fetching and active org management
   const { data: organizations = [], isLoading: orgsLoading } =
     useOrganizations();
-  const { activeOrgId, setActiveOrganization, validateActiveOrganization } =
+  const { activeOrgId, setActiveOrganization, validateActiveOrganization, isLoading: appLoading } =
     useActiveOrg();
 
   const { data: projects = [] } = useProjects(activeOrgId);
@@ -93,10 +95,16 @@ export function AppSidebar() {
     setActiveOrganization(orgId);
   }
 
+  // Show loading skeleton if app is initializing or organizations are loading
+  const isLoading = appLoading || orgsLoading;
+
   return (
     <Sidebar collapsible="icon" className="select-none">
       <SidebarContent>
-        <SidebarGroup>
+        {isLoading ? (
+          <SidebarOrgLoadingSkeleton />
+        ) : (
+          <SidebarGroup>
           <SidebarGroupLabel>
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
@@ -113,7 +121,13 @@ export function AppSidebar() {
                   align="start"
                   className="min-w-56 rounded-lg"
                 >
-                  {organizations.length === 0 ? (
+                  {orgsLoading ? (
+                    <div className="px-2 py-1.5 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                  ) : organizations.length === 0 ? (
                     <div className="px-2 py-1.5 text-sm text-muted-foreground">
                       No organizations
                     </div>
@@ -223,6 +237,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import Header from "@/components/layout/header";
+import { AppLoadingWrapper } from "@/components/layout/app-loading-wrapper";
 
 export default async function SiteLayout({
   children,
@@ -26,7 +27,9 @@ export default async function SiteLayout({
       <SidebarInset>
         <Header />
         {/* page main content */}
-        {children}
+        <AppLoadingWrapper>
+          {children}
+        </AppLoadingWrapper>
         {/* page main content ends */}
       </SidebarInset>
     </SidebarProvider>
