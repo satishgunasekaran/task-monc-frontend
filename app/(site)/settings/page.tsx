@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { OrgMembersManager } from "@/components/org-members-manager";
 import { getActiveOrgIdServer } from "@/utils/active-org/server";
 import PageContainer from "@/components/layout/page-container";
+import { PageHeader } from "@/components/layout/page-header";
 import { SettingsDangerZone } from "@/components/settings/danger-zone";
 
 export default async function SettingsPage() {
@@ -25,21 +26,16 @@ export default async function SettingsPage() {
 
   return (
     <PageContainer>
+      <PageHeader
+        title="Organization Settings"
+        description={orgName ? 
+          `Current organization: ${orgName}` : 
+          "No organization selected. Pick one from the top-left dropdown."
+        }
+      />
+      
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Org Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          {orgName ? (
-            <>
-              Current organization:{" "}
-              <span className="font-medium">{orgName}</span>
-            </>
-          ) : (
-            <>No organization selected. Pick one from the top-left dropdown.</>
-          )}
-        </p>
-
         <OrgMembersManager />
-
         <SettingsDangerZone />
       </div>
     </PageContainer>

@@ -50,14 +50,12 @@ export default function ProjectDetailPage() {
 
   return (
     <PageContainer scrollable={false}>
-      <div className="flex flex-1 flex-col space-y-4 w-full">
-        <ProjectHeader project={project} />
-        <ProjectTasksView
-          projectId={id}
-          projectName={project.name}
-          defaultView="kanban"
-        />
-      </div>
+      <ProjectHeader project={project} />
+      <ProjectTasksView
+        projectId={id}
+        projectName={project.name}
+        defaultView="kanban"
+      />
     </PageContainer>
   );
 }

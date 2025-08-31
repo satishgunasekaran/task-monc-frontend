@@ -51,7 +51,7 @@ export default async function InvitationsPage() {
 
   return (
     <PageContainer>
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle>Pending invitations</CardTitle>

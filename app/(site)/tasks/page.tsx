@@ -4,6 +4,7 @@ import { useActiveOrg } from "@/components/providers/app-provider";
 import { TasksTable } from "@/components/tasks/tasks-table";
 import { CreateTaskForm } from "@/components/tasks/task-form";
 import PageContainer from "@/components/layout/page-container";
+import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
@@ -54,30 +55,22 @@ export default function TasksPage() {
 
   return (
     <PageContainer scrollable={false}>
-      <div className="flex flex-1 flex-col space-y-4 w-full">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">Tasks</h1>
-            <p className="text-muted-foreground text-sm md:text-base">
-              Manage and track all tasks across your organization&apos;s
-              projects.
-            </p>
-          </div>
-          {/* Show a compact/new primary button in the header for quick access */}
-          <div className="ml-auto">
-            <CreateTaskForm
-              trigger={
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Task
-                </Button>
-              }
-            />
-          </div>
-        </div>
+      <PageHeader
+        title="Tasks"
+        description="Manage and track all tasks across your organization's projects."
+        action={
+          <CreateTaskForm
+            trigger={
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Task
+              </Button>
+            }
+          />
+        }
+      />
 
-        {/* Scrollable Content Area */}
+      <div className="flex-1 space-y-4 flex flex-col">
         {tasks && tasks.length > 0 ? (
           <TasksTable
             tasks={tasks}

@@ -15,8 +15,7 @@ export default async function PrivatePage() {
 
   return (
     <PageContainer>
-      <div className="w-full">
-        {/* Welcome Section */}
+      {/* Welcome Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
             Task Monc — Multi‑Project Todos
@@ -162,7 +161,6 @@ export default async function PrivatePage() {
             </CardContent>
           </Card>
         </div>
-      </div>
     </PageContainer>
   );
 }

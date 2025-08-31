@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import PageContainer from "@/components/layout/page-container";
+import { PageHeader } from "@/components/layout/page-header";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -50,15 +51,10 @@ export default async function ProfilePage() {
 
   return (
     <PageContainer>
-      <div className="w-full max-w-6xl mx-auto">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">
-            Profile Settings
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            Manage your account settings and organization memberships.
-          </p>
-        </div>
+      <PageHeader
+        title="Profile Settings"
+        description="Manage your account settings and organization memberships."
+      />
 
         <div className="space-y-6 md:space-y-8">
           {/* Profile Information */}
@@ -150,7 +146,6 @@ export default async function ProfilePage() {
             </CardContent>
           </Card>
         </div>
-      </div>
     </PageContainer>
   );
 }
