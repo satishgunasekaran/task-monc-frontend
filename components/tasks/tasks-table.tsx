@@ -2,17 +2,29 @@
 
 import { useMemo, useState, useEffect } from "react";
 import {
+  ColumnFiltersState,
+  RowSelectionState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableHeaderGroup,
-  TableProvider,
   TableRow,
-} from "@/components/ui/shadcn-io/table";
+} from "@/components/ui/table";
 import { TaskWithProfiles } from "@/lib/types";
 import { TasksTableFilters, DateFilter } from "./tasks-table-filters";
 import { getTasksTableColumns } from "./tasks-table-columns";
+import { TasksTableToolbar } from "./tasks-table-toolbar";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { applyAllFilters } from "./tasks-table-utils";
 import ScrollableContainer from "../layout/scrollable-container";
@@ -24,20 +36,34 @@ type ExtendedTaskWithProfiles = TaskWithProfiles & {
 interface TasksTableProps {
   tasks: ExtendedTaskWithProfiles[];
   defaultPageSize?: number;
+  onBulkDelete?: (tasks: TaskWithProfiles[]) => Promise<void>;
+  onBulkStatusUpdate?: (
+    tasks: TaskWithProfiles[],
+    status: string,
+  ) => Promise<void>;
 }
 
-export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
+export function TasksTable({
+  tasks,
+  defaultPageSize = 20,
+  onBulkDelete,
+  onBulkStatusUpdate,
+}: TasksTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
   const [projectFilter, setProjectFilter] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
 
-  // Pagination state
+  // Table state
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
 
-  // Apply all filters
+  // Apply all filters to get filtered data
   const filteredTasks = useMemo(() => {
     return applyAllFilters(tasks, {
       globalFilter,
@@ -66,10 +92,27 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
   const totalPages = Math.ceil(filteredTasks.length / pageSize);
 
   // Generate columns
-  const columns = useMemo(
-    () => getTasksTableColumns(),
-    [],
-  );
+  const columns = useMemo(() => getTasksTableColumns(), []);
+
+  // TanStack Table setup
+  const table = useReactTable({
+    data: paginatedTasks,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
 
   const uniqueStatuses = Array.from(new Set(tasks.map((task) => task.status)));
   const uniquePriorities = Array.from(
@@ -78,7 +121,6 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
   const uniqueProjects = Array.from(
     new Set(tasks.map((task) => task.project_name || "No Project")),
   ).sort();
-
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -116,35 +158,63 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
           filteredTasks={filteredTasks.length}
         />
       </div>
-
       {/* Table - Scrollable content */}
       <ScrollableContainer>
         <div className="border rounded-lg">
-          <TableProvider columns={columns} data={paginatedTasks}>
+          <TasksTableToolbar
+            table={table}
+            onBulkDelete={onBulkDelete}
+            onBulkStatusUpdate={onBulkStatusUpdate}
+          />
+          <Table>
             <TableHeader>
-              {({ headerGroup }) => (
-                <TableHeaderGroup
-                  headerGroup={headerGroup}
-                  key={headerGroup.id}
-                >
-                  {({ header }) => (
-                    <TableHead header={header} key={header.id} />
-                  )}
-                </TableHeaderGroup>
-              )}
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
             </TableHeader>
             <TableBody>
-              {({ row }) => (
-                <TableRow
-                  key={row.id}
-                  row={row}
-                  className="cursor-pointer hover:bg-muted/50"
-                >
-                  {({ cell }) => <TableCell cell={cell} key={cell.id} />}
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
-          </TableProvider>
+          </Table>
         </div>
       </ScrollableContainer>
 
@@ -162,7 +232,6 @@ export function TasksTable({ tasks, defaultPageSize = 20 }: TasksTableProps) {
           />
         </div>
       )}
-
     </div>
   );
 }
